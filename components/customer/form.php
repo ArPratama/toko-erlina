@@ -1,39 +1,15 @@
-<form id="frmProducts" onsubmit="return doSubmitForm(event,'products/doSave','frmProducts')" enctype="multipart/form-data">
+<form id="frmCustomer" onsubmit="return doSubmitForm(event,'customer/doSave','frmCustomer')" enctype="multipart/form-data">
   <div class="mt-4 mb-6">
-    <div id="lblMdlTitle" class="mb-2 text-lg font-semibold text-gray-700">Add New Product</div>
+    <div id="lblMdlTitle" class="mb-2 text-lg font-semibold text-gray-700">Add New Customer</div>
     <div class="text-sm text-gray-700">
       <p class="text-gray-400 mb-8">Please fill all the required fields marked with (*) symbol before saving this form</p>
       <label class="block mt-4">
-        <span>Product Name *</span>
+        <span>Customer Name *</span>
         <input
           id="txtFrmName"
           name="txtFrmName"
           type="text"
           maxlength="100"
-          class="border p-2 rounded w-full mt-1 text-sm form-input focus:border-gray-400 focus:outline-none focus:shadow-outline-gray"
-          placeholder="Type here"
-          required
-        />
-      </label>
-
-      <label class="block mt-4">
-        <span>Description</span>
-        <input
-          id="txtFrmDescription"
-          name="txtFrmDescription"
-          type="text"
-          maxlength="250"
-          class="border p-2 rounded w-full mt-1 text-sm form-input focus:border-gray-400 focus:outline-none focus:shadow-outline-gray"
-          placeholder="Type here"
-        />
-      </label>
-
-      <label class="block mt-4">
-        <span>Price *</span>
-        <input
-          id="txtFrmPrice"
-          name="txtFrmPrice"
-          type="number"
           class="border p-2 rounded w-full mt-1 text-sm form-input focus:border-gray-400 focus:outline-none focus:shadow-outline-gray"
           placeholder="Type here"
           required
@@ -83,16 +59,14 @@
 <script>
 
   function onDetailForm(ID) {
-    $('#lblMdlTitle').html('Edit Product Details');
+    $('#lblMdlTitle').html('Edit Customer Details');
     $('#hdnFrmID').val(ID);
     $('#hdnFrmAction').val('edit');
-    doFetch('products/get','_i='+ID);
+    doFetch('customer/get','_i='+ID);
   }
   function onCompleteFetch(data) {
     Swal.close();
     $('#txtFrmName').val(data.Name);
-    $('#txtFrmDescription').val(data.Description);
-    $('#txtFrmPrice').val(data.Price);
     $('#radFrmStatus_'+data.Status).prop('checked', true);
   }
 </script>

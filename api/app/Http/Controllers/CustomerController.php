@@ -8,7 +8,7 @@ use App\Exports\GeneralExport;
 use App\Imports\GeneralImport;
 use Maatwebsite\Excel\Facades\Excel;
 
-class ProductController extends Controller
+class CustomerController extends Controller
 {
     /**
      * Create a new controller instance.
@@ -50,8 +50,8 @@ class ProductController extends Controller
         $return = array('status'=>true,'message'=>"",'data'=>array(),'callback'=>"");
         $getAuth = $this->validateAuth($request->_s);
         if ($getAuth['status']) {
-            $mainQuery = "SELECT ID, Name, Price, CreatedDate, CreatedBy,ModifiedDate, ModifiedBy, Description, Status
-                            FROM ms_product
+            $mainQuery = "SELECT ID, Name, LastPurchase, CreatedDate, CreatedBy, ModifiedDate, ModifiedBy, Status
+                            FROM ms_customer
                             WHERE {definedFilter}
                             ORDER BY CreatedDate DESC
                             {Limit}";
@@ -69,11 +69,10 @@ class ProductController extends Controller
                 if (!$request->_export) {
                     if ($request->columns[0]['search']['value'] != '') $definedFilter.= " AND ID LIKE '%".$this->sanitizeString($request->columns[0]['search']['value'])."%' ";
                     if ($request->columns[1]['search']['value'] != '') $definedFilter.= " AND Name LIKE '%".$this->sanitizeString($request->columns[1]['search']['value'])."%' ";
-                    if ($request->columns[2]['search']['value'] != '') $definedFilter.= " AND Description LIKE '%".$this->sanitizeString($request->columns[2]['search']['value'])."%' ";
 
                     $total = 0;
                     $mainQueryTotal = "SELECT COUNT(ID) Total
-                                        FROM MS_PRODUCT
+                                        FROM ms_customer
                                         WHERE {definedFilter}";
                     $query = str_replace("{definedFilter}",$definedFilter,$mainQueryTotal);
                     $data = DB::select($query);
@@ -106,15 +105,14 @@ class ProductController extends Controller
         if (!$request->_export) {
             return response()->json($return, 200);
         } else {
-            $filename = 'Product_Management';
+            $filename = 'Customer_Management';
             $arrData = [];
             $arrHeader = array(
-                "ITEM ID",
-                "Name",
-                "Price",
-                "Description",
-                "Created Date",
-                "Created By",
+                "CUSTOMER ID",
+                "NAME",
+                "LAST PURCHASE",
+                "CREATED DATE",
+                "CREATED BY",
                 "STATUS"
             );
             array_push($arrData,$arrHeader);
@@ -122,8 +120,7 @@ class ProductController extends Controller
                 $rows = array(
                     $value->ID,
                     $value->Name,
-                    $value->Price,
-                    $value->Description,
+                    $value->LastPurchase,
                     $value->CreatedDate,
                     $value->CreatedBy,
                     $value->Status==1 ? "ACTIVE" : "INACTIVE"
@@ -140,18 +137,14 @@ class ProductController extends Controller
         $getAuth = $this->validateAuth($request->_s);
         if ($getAuth['status']) {
             if ($request->hdnFrmAction=="add") {
-                $query = "SELECT ID FROM ms_product WHERE Name=?";
+                $query = "SELECT ID FROM ms_customer WHERE Name=?";
                 $isExist = DB::select($query, [$request->txtFrmName]);
                 if (!$isExist) {
-                    $price = $request->txtFrmPrice;
-
-                    $query = "INSERT INTO ms_product
-                                (ID, Name, Price, Description, Status, CreatedDate, CreatedBy, ModifiedDate, ModifiedBy)
-                                VALUES(UUID(), ?, ?, ?, ?, NOW(), ?, NULL, NULL)";
+                    $query = "INSERT INTO ms_customer
+                                (ID, Name, LastPurchase, Status, CreatedDate, CreatedBy, ModifiedDate, ModifiedBy)
+                                VALUES(UUID(), ?, NULL, ?, NOW(), ?, NULL, NULL)";
                     DB::insert($query, [
                         $request->txtFrmName,
-                        $request->txtFrmPrice,
-                        $request->txtFrmDescription,
                         $request->radFrmStatus,
                         $getAuth['UserID']
                     ]);
@@ -159,22 +152,18 @@ class ProductController extends Controller
                     $return['callback'] = "doReloadTable()";
                 } else {
                     $return['status'] = false;
-                    $return['message'] = "Product already registered";
+                    $return['message'] = "Customer already registered";
                 }
             }
             if ($request->hdnFrmAction=="edit") {
-                $query = "UPDATE MS_PRODUCT
+                $query = "UPDATE ms_customer
                             SET Name=?,
-                                Price=?,
-                                Description=?,
                                 Status=?,
                                 ModifiedDate=NOW(),
                                 ModifiedBy=?
                             WHERE ID=?";
                 DB::update($query, [
                     $request->txtFrmName,
-                    $request->txtFrmPrice,
-                    $request->txtFrmDescription,
                     $request->radFrmStatus,
                     $getAuth['UserID'],
                     $request->hdnFrmID
@@ -577,7 +566,7 @@ class ProductController extends Controller
         $return = array('status'=>true,'message'=>"",'data'=>null,'callback'=>"");
         $getAuth = $this->validateAuth($request->_s);
         if ($getAuth['status']) {
-            $query = "DELETE FROM ms_product WHERE ID=?";
+            $query = "DELETE FROM ms_customer WHERE ID=?";
             DB::delete($query, [$request->_i]);
             $return['message'] = "Data has been removed!";
             $return['callback'] = "doReloadTable()";

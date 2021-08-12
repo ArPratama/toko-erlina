@@ -8,7 +8,7 @@ use App\Exports\GeneralExport;
 use App\Imports\GeneralImport;
 use Maatwebsite\Excel\Facades\Excel;
 
-class ProductController extends Controller
+class StockController extends Controller
 {
     /**
      * Create a new controller instance.
@@ -50,14 +50,15 @@ class ProductController extends Controller
         $return = array('status'=>true,'message'=>"",'data'=>array(),'callback'=>"");
         $getAuth = $this->validateAuth($request->_s);
         if ($getAuth['status']) {
-            $mainQuery = "SELECT ID, Name, Price, CreatedDate, CreatedBy,ModifiedDate, ModifiedBy, Description, Status
-                            FROM ms_product
+            $mainQuery = "SELECT st.ID, st.ProductID, p.Name ProductName, st.Amount, st.Status, st.Source, st.CreatedDate, st.CreatedBy, st.IncomingDate
+                            FROM ms_stock st
+                            LEFT JOIN ms_product p ON p.ID = st.ProductID
                             WHERE {definedFilter}
-                            ORDER BY CreatedDate DESC
+                            ORDER BY st.CreatedDate DESC
                             {Limit}";
-            $definedFilter = "Status=1";
+            $definedFilter = "1=1";
             if ($request->_i) {
-                $definedFilter = "ID=?";
+                $definedFilter = "st.ID=?";
                 $mainQuery = str_replace("{Limit}",'',$mainQuery);
                 $query = str_replace("{definedFilter}",$definedFilter,$mainQuery);
                 $data = DB::select($query,[$request->_i]);
@@ -68,12 +69,11 @@ class ProductController extends Controller
             } else {
                 if (!$request->_export) {
                     if ($request->columns[0]['search']['value'] != '') $definedFilter.= " AND ID LIKE '%".$this->sanitizeString($request->columns[0]['search']['value'])."%' ";
-                    if ($request->columns[1]['search']['value'] != '') $definedFilter.= " AND Name LIKE '%".$this->sanitizeString($request->columns[1]['search']['value'])."%' ";
-                    if ($request->columns[2]['search']['value'] != '') $definedFilter.= " AND Description LIKE '%".$this->sanitizeString($request->columns[2]['search']['value'])."%' ";
+                    if ($request->columns[1]['search']['value'] != '') $definedFilter.= " AND p.Name LIKE '%".$this->sanitizeString($request->columns[1]['search']['value'])."%' ";
 
                     $total = 0;
                     $mainQueryTotal = "SELECT COUNT(ID) Total
-                                        FROM MS_PRODUCT
+                                        FROM ms_stock
                                         WHERE {definedFilter}";
                     $query = str_replace("{definedFilter}",$definedFilter,$mainQueryTotal);
                     $data = DB::select($query);
@@ -106,27 +106,29 @@ class ProductController extends Controller
         if (!$request->_export) {
             return response()->json($return, 200);
         } else {
-            $filename = 'Product_Management';
+            $filename = 'Stock_Management';
             $arrData = [];
             $arrHeader = array(
                 "ITEM ID",
-                "Name",
-                "Price",
-                "Description",
-                "Created Date",
-                "Created By",
-                "STATUS"
+                "PRODUCT NAME",
+                "AMOUNT",
+                "STATUS",
+                "SOURCE",
+                "INCOMING DATE",
+                "CREATED DATE",
+                "CREATED BY"
             );
             array_push($arrData,$arrHeader);
             foreach ($return['data'] as $key => $value) {
                 $rows = array(
                     $value->ID,
-                    $value->Name,
-                    $value->Price,
-                    $value->Description,
+                    $value->ProductName,
+                    $value->Amount,
+                    $value->Status==1 ? "DISPLAY" : "ON STORAGE",
+                    $value->Source,
+                    $value->IncomingDate,
                     $value->CreatedDate,
-                    $value->CreatedBy,
-                    $value->Status==1 ? "ACTIVE" : "INACTIVE"
+                    $value->CreatedBy
                 );
                 array_push($arrData,$rows);
             }
@@ -140,43 +142,37 @@ class ProductController extends Controller
         $getAuth = $this->validateAuth($request->_s);
         if ($getAuth['status']) {
             if ($request->hdnFrmAction=="add") {
-                $query = "SELECT ID FROM ms_product WHERE Name=?";
-                $isExist = DB::select($query, [$request->txtFrmName]);
-                if (!$isExist) {
-                    $price = $request->txtFrmPrice;
-
-                    $query = "INSERT INTO ms_product
-                                (ID, Name, Price, Description, Status, CreatedDate, CreatedBy, ModifiedDate, ModifiedBy)
-                                VALUES(UUID(), ?, ?, ?, ?, NOW(), ?, NULL, NULL)";
-                    DB::insert($query, [
-                        $request->txtFrmName,
-                        $request->txtFrmPrice,
-                        $request->txtFrmDescription,
-                        $request->radFrmStatus,
-                        $getAuth['UserID']
-                    ]);
-                    $return['message'] = "Data has been saved!";
-                    $return['callback'] = "doReloadTable()";
-                } else {
-                    $return['status'] = false;
-                    $return['message'] = "Product already registered";
-                }
+                $query = "INSERT INTO ms_stock
+                            (ID, ProductID, Amount, Status, Source, CreatedDate, CreatedBy, ModifiedDate, ModifiedBy, IncomingDate)
+                            VALUES(UUID(), ?, ?, ?, ?, NOW(), ?, NULL, NULL, ?)";
+                DB::insert($query, [
+                    $request->txtFrmProductID,
+                    $request->txtFrmAmount,
+                    $request->radFrmStatus,
+                    $request->txtFrmSource,
+                    $getAuth['UserID'],
+                    $request->txtFrmIncomingDate,
+                ]);
+                $return['message'] = "Data has been saved!";
+                $return['callback'] = "doReloadTable()";
             }
             if ($request->hdnFrmAction=="edit") {
-                $query = "UPDATE MS_PRODUCT
-                            SET Name=?,
-                                Price=?,
-                                Description=?,
+                $query = "UPDATE ms_stock
+                            SET ProductID=?,
+                                Amount=?,
+                                Source=?,
                                 Status=?,
                                 ModifiedDate=NOW(),
                                 ModifiedBy=?
+                                IncomingDate=?
                             WHERE ID=?";
                 DB::update($query, [
-                    $request->txtFrmName,
-                    $request->txtFrmPrice,
-                    $request->txtFrmDescription,
+                    $request->txtFrmProductID,
+                    $request->txtFrmAmount,
+                    $request->txtFrmSource,
                     $request->radFrmStatus,
                     $getAuth['UserID'],
+                    $request->radFrmIncomingDate,
                     $request->hdnFrmID
                 ]);
                 $return['message'] = "Data has been saved!";

@@ -1,20 +1,15 @@
 <div class="mt-4 mb-6">
-  <div class="mb-2 text-lg font-semibold text-gray-700">Product Details</div>
+  <div class="mb-2 text-lg font-semibold text-gray-700">Customer Details</div>
   <div class="text-sm text-gray-700">
 
     <label class="block mt-4">
-      <span class="block text-gray-500">Product Name:</span>
+      <span class="block text-gray-500">Customer Name:</span>
       <span id="lblFrmName" class="block"></span>
     </label>
 
     <label class="block mt-4">
-      <span class="block text-gray-500">Description:</span>
-      <span id="lblFrmDescription" class="block"></span>
-    </label>
-
-    <label class="block mt-4">
-      <span class="block text-gray-500">Price (RRP):</span>
-      <span id="lblFrmPrice" class="block"></span>
+      <span class="block text-gray-500">Last Purchase:</span>
+      <span id="lblFrmLastPurchase" class="block"></span>
     </label>
 
     <div class="block mt-4">
@@ -34,14 +29,13 @@
 
 <script>
   function onDetailForm(ID) {
-    doFetch('products/get','_i='+ID);
+    doFetch('customer/get','_i='+ID);
   }
   function onCompleteFetch(data) {
     Swal.close();
     var status = html = data.Status==1 ? '<span class="px-2 py-1 font-semibold leading-tight text-green-700 bg-green-100 rounded-full">Active</span>' : '<span class="px-2 py-1 font-semibold leading-tight text-white bg-red-400 rounded-full">Inactive</span>';
     $('#lblFrmName').html(data.Name);
-    $('#lblFrmDescription').html(data.Description);
-    $('#lblFrmPrice').html(doFormatNumber(data.Price));
+    $('#lblFrmLastPurchase').html(data.LastPurchase);
     $('#lblFrmStatus').html(status);
   }
 </script>

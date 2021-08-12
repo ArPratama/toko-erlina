@@ -1,7 +1,7 @@
 <!--
   <div class="relative text-gray-600 w-52 mb-6 float-left">
   <input 
-    id="txtSearch_tblproducts" 
+    id="txtSearch_tblcustomers"
     placeholder="Search" 
     class="bg-white h-10 px-5 pr-10 rounded-lg text-sm focus:outline-none border"
     onkeyup="doSearchTable()">
@@ -15,7 +15,7 @@
 
 <button
   id="btnFrmAdd"
-  onclick="loadModal('products/form')"
+  onclick="loadModal('customer/form')"
   class="w-32 float-right mb-6 px-4 py-2 text-sm text-white bg-blue-600 border border-transparent rounded-lg active:bg-blue-600 hover:bg-blue-700 focus:outline-none focus:shadow-outline-blue"
   style="display:none"
 >
@@ -24,7 +24,7 @@
 
 <button
   id="btnFrmBulk"
-  onclick="loadModal('products/bulk')"
+  onclick="loadModal('customer/bulk')"
   class="w-38 float-right mb-6 mr-2 hidden sm:block px-4 py-2 text-sm text-white bg-blue-600 border border-transparent rounded-lg active:bg-blue-600 hover:bg-blue-700 focus:outline-none focus:shadow-outline-blue"
   style="display:none"
 >
@@ -40,7 +40,7 @@
   Export to Excel
 </button>
 
-<table id="tblproducts" class="w-full whitespace-nowrap">
+<table id="tblcustomer" class="w-full whitespace-nowrap">
   <thead>
     <tr class="font-semibold tracking-wide text-left text-gray-500 bg-gray-100 uppercase border-b">
       <th class="px-4 py-3">
@@ -55,35 +55,25 @@
         />
       </th>
       <th class="px-4 py-3">
-        Product Name<br />
+        Customer Name<br />
         <input
-          id="txtFilterProduct"
-          name="txtFilterProduct"
+          id="txtFilterName"
+          name="txtFilterName"
           type="text"
           class="border p-2 rounded w-full mt-1 text-sm form-input focus:border-gray-400 focus:outline-none focus:shadow-outline-gray"
           placeholder="Type here"
-          onkeyup="doSearchTableColumn(1,$('#txtFilterProduct').val())"
+          onkeyup="doSearchTableColumn(1,$('#txtFilterName').val())"
         />
       </th>
       <th class="px-4 py-3">
-        Description<br />
+        Last Purchase<br />
         <input
-          id="txtFilterDescription"
-          name="txtFilterDescription"
+          id="txtFilterLastPurchase"
+          name="txtFilterLastPurchase"
           type="text"
           class="border p-2 rounded w-full mt-1 text-sm form-input focus:border-gray-400 focus:outline-none focus:shadow-outline-gray"
           placeholder="Type here"
-          onkeyup="doSearchTableColumn(2,$('#txtFilterDescription').val())"
-        />
-      </th>
-      <th class="px-4 py-3 text-right">
-        Price<br />
-        <input
-          id="txtFilterPrice"
-          name="txtFilterPrice"
-          type="text"
-          class="bg-gray-100 border p-2 rounded w-full mt-1 text-sm form-input focus:border-gray-400 focus:outline-none focus:shadow-outline-gray"
-          placeholder="Type here"
+          onkeyup="doSearchTableColumn(2,$('#txtFilterLastPurchase').val())"
           disabled
         />
       </th>
@@ -105,16 +95,16 @@
 
 <script>
   Pace.restart();
-  $('#tblproducts').DataTable( {
+  $('#tblcustomer').DataTable( {
     ajax: {
-      url: apiUrl+'/products/get?_s='+getCookie(MSG['cookiePrefix']+'AUTH-TOKEN'),
+      url: apiUrl+'/customer/get?_s='+getCookie(MSG['cookiePrefix']+'AUTH-TOKEN'),
       beforeSend: function(e, t, i) { doBeforeSend(); },
       error: function(e, t, i) { doHandleError(e, t, i) },
       complete: function (result) {
         if (parseInt(result.responseJSON.recordsTotal) == 0) {
-          $('#tblproducts tbody').html('');
-          $('#tblproducts_info').html('Showing 0 to 0 of 0 entries')
-          $('#tblproducts_paginate').html('<div><a class="px-3 py-1 rounded-md cursor-pointer previous disabled">Previous</a><span></span><a class="px-3 py-1 rounded-md cursor-pointer next disabled">Next</a></div>');
+          $('#tblcustomer tbody').html('');
+          $('#tblcustomer_info').html('Showing 0 to 0 of 0 entries')
+          $('#tblcustomer_paginate').html('<div><a class="px-3 py-1 rounded-md cursor-pointer previous disabled">Previous</a><span></span><a class="px-3 py-1 rounded-md cursor-pointer next disabled">Next</a></div>');
         } 
         Swal.close(); 
       },
@@ -129,15 +119,7 @@
     columns: [
       { data:'ID', className:'px-4 py-3 text-sm' },
       { data:'Name', className:'px-4 py-3 text-sm' },
-      { data:'Description', className:'px-4 py-3 text-sm' },
-      { 
-        data:'Price',
-        className:'px-4 py-3 text-sm text-right',
-        render: function (data, type, full, meta) {
-          var html = doFormatNumber(data);
-          return html
-        },
-      },
+      { data:'LastPurchase', className:'px-4 py-3 text-sm' },
       {
         data:'Status',
         className:'px-4 py-3 text-sm',
@@ -187,33 +169,33 @@
 
   function doReloadTable() {
     Pace.restart();
-    $('#tblproducts').DataTable().ajax.reload();
+    $('#tblcustomer').DataTable().ajax.reload();
     modal.close();
   }
 
   function doSearchTable() {
-    $('#tblproducts').DataTable().search( $('#txtSearch_tblproducts').val() ).draw();
+    $('#tblcustomer').DataTable().search( $('#txtSearch_tblcustomer').val() ).draw();
   }
 
   function doSearchTableColumn(column,value) {
     value = value.trim();
     if (value.length >= 0) {
       setTimeout(function(){  
-        $('#tblproducts').DataTable().columns( column ).search( value ).draw();
+        $('#tblcustomer').DataTable().columns( column ).search( value ).draw();
       }, 1000);
     }
   }
 
   function showDetailView(ID) {
-    loadModal('products/view','onDetailForm(\''+ID+'\')');
+    loadModal('customer/view','onDetailForm(\''+ID+'\')');
   }
 
   function showDetailForm(ID) {
-    loadModal('products/form','onDetailForm(\''+ID+'\')');
+    loadModal('customer/form','onDetailForm(\''+ID+'\')');
   }
 
   function downloadExcel() {
-    window.location=apiUrl+'/products/get?_export=true&_s='+getCookie(MSG['cookiePrefix']+'AUTH-TOKEN');
+    window.location=apiUrl+'/customer/get?_export=true&_s='+getCookie(MSG['cookiePrefix']+'AUTH-TOKEN');
   }
 
   function showDeleteConfirm(ID,Label) {
@@ -221,7 +203,7 @@
     .then((result) => {
       if (result.isConfirmed) {
         var param = '_i='+ID;
-        doSubmit('products/doDelete',param);
+        doSubmit('customer/doDelete',param);
       }
     });
   }

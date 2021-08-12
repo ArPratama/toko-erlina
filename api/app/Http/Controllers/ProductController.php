@@ -110,11 +110,11 @@ class ProductController extends Controller
             $arrData = [];
             $arrHeader = array(
                 "ITEM ID",
-                "Name",
-                "Price",
-                "Description",
-                "Created Date",
-                "Created By",
+                "NAME",
+                "PRICE",
+                "DESCRIPTION",
+                "CREATED DATE",
+                "CREATED BY",
                 "STATUS"
             );
             array_push($arrData,$arrHeader);
@@ -143,8 +143,6 @@ class ProductController extends Controller
                 $query = "SELECT ID FROM ms_product WHERE Name=?";
                 $isExist = DB::select($query, [$request->txtFrmName]);
                 if (!$isExist) {
-                    $price = $request->txtFrmPrice;
-
                     $query = "INSERT INTO ms_product
                                 (ID, Name, Price, Description, Status, CreatedDate, CreatedBy, ModifiedDate, ModifiedBy)
                                 VALUES(UUID(), ?, ?, ?, ?, NOW(), ?, NULL, NULL)";
@@ -590,50 +588,16 @@ class ProductController extends Controller
         $return = array('status'=>true,'message'=>"",'data'=>null,'callback'=>"");
         $getAuth = $this->validateAuth($request->_s);
         if ($getAuth['status']) {
-            if($request->ver == 'v2'){
-                $keywords = $this->sanitizeString($request->_i);
-                $query = "SELECT ID,
-                        SKU,
-                        Name,
-                        Description,
-                        UnitPrice,
-                        InPrice,
-                        ThruPrice,
-                        UnitPriceAFP,
-                        InPriceAFP,
-                        ThruPriceAFP,
-                        UnitPriceFTZ,
-                        InPriceFTZ,
-                        ThruPriceFTZ,
-                        Color,
-                        Capacity,
-                        MarketName
-                        FROM MS_PRODUCT
-                        WHERE Status=1
-                        AND (SKU LIKE '%$keywords%' OR Name LIKE '%$keywords%' OR MarketName LIKE '%$keywords%' OR Color LIKE '%$keywords%' OR Capacity LIKE '%$keywords%')
-                        ORDER BY SKU ASC";
-                $data = DB::select($query);
-                if ($data) $return['data'] = $data;
-            }else{
-                $query = "SELECT ID,
-                        SKU,
-                        Name,
-                        Description,
-                        UnitPrice,
-                        InPrice,
-                        ThruPrice,
-                        UnitPriceAFP,
-                        InPriceAFP,
-                        ThruPriceAFP,
-                        UnitPriceFTZ,
-                        InPriceFTZ,
-                        ThruPriceFTZ
-                        FROM MS_PRODUCT
-                        WHERE Status=1
-                        AND UPPER(SKU)=UPPER(?)";
-                $data = DB::select($query,[$request->_i]);
-                if ($data) $return['data'] = $data[0];
-            }
+            $keywords = $this->sanitizeString($request->_i);
+            $query = "SELECT ID,
+                    Name,
+                    Description
+                    FROM ms_product
+                    WHERE Status=1
+                    AND (Name LIKE '%$keywords%' OR Description LIKE '%$keywords%')
+                    ORDER BY CreatedDate ASC";
+            $data = DB::select($query);
+            if ($data) $return['data'] = $data;
             if ($request->_cb) $return['callback'] = $request->_cb."(e.data)";
         } else $return = array('status'=>false,'message'=>"Not Authorized");
         return response()->json($return, 200);

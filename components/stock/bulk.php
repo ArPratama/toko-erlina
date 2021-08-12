@@ -1,5 +1,5 @@
 <div class="mt-4 mb-6">
-  <div id="lblMdlTitle" class="mb-2 text-lg font-semibold text-gray-700">Product Management</div>
+  <div id="lblMdlTitle" class="mb-2 text-lg font-semibold text-gray-700">Stock Management</div>
   <div class="text-sm text-gray-700">
     <p class="text-gray-400 mb-8">Here you can export all data</p>
     
@@ -12,15 +12,15 @@
 
 <script>
   function downloadTemplate() {
-    window.location='components/products/Product_Management_Template.xlsx';
+    window.location='components/stock/Product_Management_Template.xlsx';
   }
 
   function beforeUpload() {
-    doUpload('products/doUpload','inpFile');
+    doUpload('stock/doUpload','inpFile');
   }
 
   function uploadError(data) {
-    loadPage('products/uploadError','onLoad(\''+encodeURIComponent(JSON.stringify(data))+'\')');
+    loadPage('stock/uploadError','onLoad(\''+encodeURIComponent(JSON.stringify(data))+'\')');
   }
 
   if (getCookie(MSG['cookiePrefix']+'GLOBAL-ACCOUNTTYPE')=='1') {

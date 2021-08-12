@@ -1,7 +1,7 @@
 <!--
   <div class="relative text-gray-600 w-52 mb-6 float-left">
   <input 
-    id="txtSearch_tblproducts" 
+    id="txtSearch_tblStock"
     placeholder="Search" 
     class="bg-white h-10 px-5 pr-10 rounded-lg text-sm focus:outline-none border"
     onkeyup="doSearchTable()">
@@ -15,7 +15,7 @@
 
 <button
   id="btnFrmAdd"
-  onclick="loadModal('products/form')"
+  onclick="loadModal('stock/form')"
   class="w-32 float-right mb-6 px-4 py-2 text-sm text-white bg-blue-600 border border-transparent rounded-lg active:bg-blue-600 hover:bg-blue-700 focus:outline-none focus:shadow-outline-blue"
   style="display:none"
 >
@@ -24,7 +24,7 @@
 
 <button
   id="btnFrmBulk"
-  onclick="loadModal('products/bulk')"
+  onclick="loadModal('stock/bulk')"
   class="w-38 float-right mb-6 mr-2 hidden sm:block px-4 py-2 text-sm text-white bg-blue-600 border border-transparent rounded-lg active:bg-blue-600 hover:bg-blue-700 focus:outline-none focus:shadow-outline-blue"
   style="display:none"
 >
@@ -40,7 +40,7 @@
   Export to Excel
 </button>
 
-<table id="tblproducts" class="w-full whitespace-nowrap">
+<table id="tblstock" class="w-full whitespace-nowrap">
   <thead>
     <tr class="font-semibold tracking-wide text-left text-gray-500 bg-gray-100 uppercase border-b">
       <th class="px-4 py-3">
@@ -66,21 +66,10 @@
         />
       </th>
       <th class="px-4 py-3">
-        Description<br />
+        Amount<br />
         <input
-          id="txtFilterDescription"
-          name="txtFilterDescription"
-          type="text"
-          class="border p-2 rounded w-full mt-1 text-sm form-input focus:border-gray-400 focus:outline-none focus:shadow-outline-gray"
-          placeholder="Type here"
-          onkeyup="doSearchTableColumn(2,$('#txtFilterDescription').val())"
-        />
-      </th>
-      <th class="px-4 py-3 text-right">
-        Price<br />
-        <input
-          id="txtFilterPrice"
-          name="txtFilterPrice"
+          id="txtFilterAmount"
+          name="txtFilterAmount"
           type="text"
           class="bg-gray-100 border p-2 rounded w-full mt-1 text-sm form-input focus:border-gray-400 focus:outline-none focus:shadow-outline-gray"
           placeholder="Type here"
@@ -95,6 +84,28 @@
           type="text"
           class="bg-gray-100 border p-2 rounded w-full mt-1 text-sm form-input focus:border-gray-400 focus:outline-none focus:shadow-outline-gray"
           placeholder="Type here"
+          onkeyup="doSearchTableColumn(2,$('#txtFilterStatus').val())"
+        />
+      </th>
+      <th class="px-4 py-3">
+        Source<br />
+        <input
+          id="txtFilterSource"
+          name="txtFilterSource"
+          type="text"
+          class="bg-gray-100 border p-2 rounded w-full mt-1 text-sm form-input focus:border-gray-400 focus:outline-none focus:shadow-outline-gray"
+          placeholder="Type here"
+          disabled
+        />
+      </th>
+      <th class="px-4 py-3">
+        Incoming Date<br />
+        <input
+          id="txtFilterIncomingDate"
+          name="txtFilterIncomingDate"
+          type="text"
+          class="bg-gray-100 border p-2 rounded w-full mt-1 text-sm form-input focus:border-gray-400 focus:outline-none focus:shadow-outline-gray"
+          placeholder="Type here"
           disabled
         />
       </th>
@@ -105,16 +116,16 @@
 
 <script>
   Pace.restart();
-  $('#tblproducts').DataTable( {
+  $('#tblstock').DataTable( {
     ajax: {
-      url: apiUrl+'/products/get?_s='+getCookie(MSG['cookiePrefix']+'AUTH-TOKEN'),
+      url: apiUrl+'/stock/get?_s='+getCookie(MSG['cookiePrefix']+'AUTH-TOKEN'),
       beforeSend: function(e, t, i) { doBeforeSend(); },
       error: function(e, t, i) { doHandleError(e, t, i) },
       complete: function (result) {
         if (parseInt(result.responseJSON.recordsTotal) == 0) {
-          $('#tblproducts tbody').html('');
-          $('#tblproducts_info').html('Showing 0 to 0 of 0 entries')
-          $('#tblproducts_paginate').html('<div><a class="px-3 py-1 rounded-md cursor-pointer previous disabled">Previous</a><span></span><a class="px-3 py-1 rounded-md cursor-pointer next disabled">Next</a></div>');
+          $('#tblstock tbody').html('');
+          $('#tblstock_info').html('Showing 0 to 0 of 0 entries')
+          $('#tblstock_paginate').html('<div><a class="px-3 py-1 rounded-md cursor-pointer previous disabled">Previous</a><span></span><a class="px-3 py-1 rounded-md cursor-pointer next disabled">Next</a></div>');
         } 
         Swal.close(); 
       },
@@ -128,24 +139,18 @@
     "ordering": false,
     columns: [
       { data:'ID', className:'px-4 py-3 text-sm' },
-      { data:'Name', className:'px-4 py-3 text-sm' },
-      { data:'Description', className:'px-4 py-3 text-sm' },
-      { 
-        data:'Price',
-        className:'px-4 py-3 text-sm text-right',
-        render: function (data, type, full, meta) {
-          var html = doFormatNumber(data);
-          return html
-        },
-      },
+      { data:'ProductName', className:'px-4 py-3 text-sm' },
+      { data:'Amount', className:'px-4 py-3 text-sm' },
       {
         data:'Status',
         className:'px-4 py-3 text-sm',
         render: function (data, type, full, meta) {
-          var html = data==1 ? '<span class="px-2 py-1 font-semibold leading-tight text-green-700 bg-green-100 rounded-full">Active</span>' : '<span class="px-2 py-1 font-semibold leading-tight text-white bg-red-400 rounded-full">Inactive</span>';
+          var html = data==1 ? '<span class="px-2 py-1 font-semibold leading-tight text-green-700 bg-green-100 rounded-full">Display</span>' : '<span class="px-2 py-1 font-semibold leading-tight text-white bg-red-400 rounded-full">On Storage</span>';
           return html
         },
       },
+      { data:'Source', className:'px-4 py-3 text-sm' },
+      { data:'IncomingDate', className:'px-4 py-3 text-sm' },
       {
         data:'ID',
         render: function (data, type, full, meta) {
@@ -155,16 +160,6 @@
                           '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">' +
                             '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />' +
                             '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />' +
-                          '</svg>' +
-                        '</div>' +
-                        '<div onclick="showDetailForm(\''+full['ID']+'\')" class="w-4 mr-2 transform hover:text-blue-500 hover:scale-110 cursor-pointer">' +
-                          '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">' +
-                            '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />' +
-                          '</svg>' +
-                        '</div>' +
-                        '<div onclick="showDeleteConfirm(\''+full['ID']+'\',\''+full['Name']+'\')" class="w-4 mr-2 transform hover:text-blue-500 hover:scale-110 cursor-pointer">' +
-                          '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">' +
-                            '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />' +
                           '</svg>' +
                         '</div>' +
                       '</div>';
@@ -187,33 +182,33 @@
 
   function doReloadTable() {
     Pace.restart();
-    $('#tblproducts').DataTable().ajax.reload();
+    $('#tblstock').DataTable().ajax.reload();
     modal.close();
   }
 
   function doSearchTable() {
-    $('#tblproducts').DataTable().search( $('#txtSearch_tblproducts').val() ).draw();
+    $('#tblstock').DataTable().search( $('#txtSearch_tblstock').val() ).draw();
   }
 
   function doSearchTableColumn(column,value) {
     value = value.trim();
     if (value.length >= 0) {
       setTimeout(function(){  
-        $('#tblproducts').DataTable().columns( column ).search( value ).draw();
+        $('#tblstock').DataTable().columns( column ).search( value ).draw();
       }, 1000);
     }
   }
 
   function showDetailView(ID) {
-    loadModal('products/view','onDetailForm(\''+ID+'\')');
+    loadModal('stock/view','onDetailForm(\''+ID+'\')');
   }
 
   function showDetailForm(ID) {
-    loadModal('products/form','onDetailForm(\''+ID+'\')');
+    loadModal('stock/form','onDetailForm(\''+ID+'\')');
   }
 
   function downloadExcel() {
-    window.location=apiUrl+'/products/get?_export=true&_s='+getCookie(MSG['cookiePrefix']+'AUTH-TOKEN');
+    window.location=apiUrl+'/stock/get?_export=true&_s='+getCookie(MSG['cookiePrefix']+'AUTH-TOKEN');
   }
 
   function showDeleteConfirm(ID,Label) {
@@ -221,7 +216,7 @@
     .then((result) => {
       if (result.isConfirmed) {
         var param = '_i='+ID;
-        doSubmit('products/doDelete',param);
+        doSubmit('stock/doDelete',param);
       }
     });
   }
