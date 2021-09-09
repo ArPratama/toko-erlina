@@ -71,4 +71,16 @@ class GlobalController extends Controller
         } else $return = array('status'=>false,'message'=>"Not Authorized");
         return response()->json($return, 200);
     }
+
+    public function getStockStatus(Request $request)
+    {
+        $return = array('status'=>true,'message'=>"",'data'=>null,'callback'=>"");
+        $getAuth = $this->validateAuth($request->_s);
+        if ($getAuth['status']) {
+            $query = "SELECT DISTINCT(Status) Status FROM ms_stock";
+            $return['data'] = DB::select($query);
+            if ($request->_cb) $return['callback'] = $request->_cb."(e.data,'".$request->_p."')";
+        } else $return = array('status'=>false,'message'=>"Not Authorized");
+        return response()->json($return, 200);
+    }
 }

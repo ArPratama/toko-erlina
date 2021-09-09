@@ -23,6 +23,7 @@ $router->group(['prefix' => 'dashboard'], function () use ($router) {
 $router->group(['prefix' => 'global'], function () use ($router) {
     $router->get('getMenu',  ['uses' => 'GlobalController@getMenu']);
     $router->get('getRole',  ['uses' => 'GlobalController@getRole']);
+    $router->get('getStockStatus',  ['uses' => 'GlobalController@getStockStatus']);
 });
 
 $router->group(['prefix' => 'settings'], function () use ($router) {
@@ -73,6 +74,20 @@ $router->group(['prefix' => 'stock'], function () use ($router) {
     $router->post('doUpload',  ['uses' => 'StockController@doUpload']);
     $router->post('doDelete',  ['uses' => 'StockController@doDelete']);
     $router->get('doLookup',  ['uses' => 'StockController@doLookup']);
+});
+
+$router->group(['prefix' => 'transaction'], function () use ($router) {
+    $router->get('get',  ['uses' => 'TransactionController@getAll']);
+    $router->post('doSave',  ['uses' => 'TransactionController@doSave']);
+    $router->post('doUpload',  ['uses' => 'TransactionController@doUpload']);
+    $router->post('doDelete',  ['uses' => 'TransactionController@doDelete']);
+    $router->get('doLookup',  ['uses' => 'TransactionController@doLookup']);
+    $router->group(['prefix' => 'detail'], function () use ($router) {
+        $router->get('get',  ['uses' => 'TransactionController@getItems']);
+        $router->post('doSave',  ['uses' => 'TransactionController@doSaveItem']);
+        $router->post('doDelete',  ['uses' => 'TransactionController@doDeleteItem']);
+        $router->post('doApprovalOrder',  ['uses' => 'TransactionController@doApprovalOrderItem']);
+    });
 });
 
 $router->group(['prefix' => 'reports'], function () use ($router) {

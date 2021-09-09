@@ -8,7 +8,7 @@ use App\Exports\GeneralExport;
 use App\Imports\GeneralImport;
 use Maatwebsite\Excel\Facades\Excel;
 
-class CustomerController extends Controller
+class TransactionController extends Controller
 {
     /**
      * Create a new controller instance.
@@ -50,14 +50,27 @@ class CustomerController extends Controller
         $return = array('status'=>true,'message'=>"",'data'=>array(),'callback'=>"");
         $getAuth = $this->validateAuth($request->_s);
         if ($getAuth['status']) {
-            $mainQuery = "SELECT ID, Name, LastPurchase, CreatedDate, CreatedBy, ModifiedDate, ModifiedBy, Status
-                            FROM ms_customer
-                            WHERE {definedFilter}
-                            ORDER BY CreatedDate DESC
-                            {Limit}";
-            $definedFilter = "Status=1";
+            $mainQuery = "SELECT t.ID,
+            t.TransactionDate,
+            t.Status,
+            cs.Name CustomerName,
+            t.Description,
+            SUM(td.Amount) TotalItem,
+            SUM(td.Price * td.Amount) TotalPrice
+            FROM tr_transaction t
+            LEFT JOIN ms_customer cs ON cs.ID = t.CustomerID
+            LEFT JOIN tr_transaction_detail td ON td.TransactionID =  t.ID
+            WHERE {definedFilter}
+            GROUP BY t.ID,
+            t.TransactionDate,
+            t.Status,
+            cs.Name,
+            t.Description
+            ORDER BY t.CreatedDate DESC
+            {Limit}";
+            $definedFilter = "t.Status IN (1,2)";
             if ($request->_i) {
-                $definedFilter = "ID=?";
+                $definedFilter = "t.ID=?";
                 $mainQuery = str_replace("{Limit}",'',$mainQuery);
                 $query = str_replace("{definedFilter}",$definedFilter,$mainQuery);
                 $data = DB::select($query,[$request->_i]);
@@ -67,12 +80,13 @@ class CustomerController extends Controller
                 }
             } else {
                 if (!$request->_export) {
-                    if ($request->columns[0]['search']['value'] != '') $definedFilter.= " AND ID LIKE '%".$this->sanitizeString($request->columns[0]['search']['value'])."%' ";
-                    if ($request->columns[1]['search']['value'] != '') $definedFilter.= " AND Name LIKE '%".$this->sanitizeString($request->columns[1]['search']['value'])."%' ";
+                    if ($request->columns[0]['search']['value'] != '') $definedFilter.= " AND t.TransactionDate LIKE '%".$this->sanitizeString($request->columns[0]['search']['value'])."%' ";
+                    if ($request->columns[1]['search']['value'] != '') $definedFilter.= " AND t.Status LIKE '%".$this->sanitizeString($request->columns[1]['search']['value'])."%' ";
+                    if ($request->columns[2]['search']['value'] != '') $definedFilter.= " AND cs.Name LIKE '%".$this->sanitizeString($request->columns[2]['search']['value'])."%' ";
 
                     $total = 0;
-                    $mainQueryTotal = "SELECT COUNT(ID) Total
-                                        FROM ms_customer
+                    $mainQueryTotal = "SELECT COUNT(t.ID) Total
+                                        FROM tr_transaction t
                                         WHERE {definedFilter}";
                     $query = str_replace("{definedFilter}",$definedFilter,$mainQueryTotal);
                     $data = DB::select($query);
@@ -105,25 +119,23 @@ class CustomerController extends Controller
         if (!$request->_export) {
             return response()->json($return, 200);
         } else {
-            $filename = 'Customer_Management';
+            $filename = 'Transaction_Management';
             $arrData = [];
             $arrHeader = array(
-                "CUSTOMER ID",
-                "NAME",
-                "LAST PURCHASE",
-                "CREATED DATE",
-                "CREATED BY",
-                "STATUS"
+                "ITEM ID",
+                "TRANSACTION DATE",
+                "STATUS",
+                "CUSTOMER NAME",
+                "DESCRIPTION",
             );
             array_push($arrData,$arrHeader);
             foreach ($return['data'] as $key => $value) {
                 $rows = array(
                     $value->ID,
-                    $value->Name,
-                    $value->LastPurchase,
-                    $value->CreatedDate,
-                    $value->CreatedBy,
-                    $value->Status==1 ? "ACTIVE" : "INACTIVE"
+                    $value->TransactionDate,
+                    $value->Status,
+                    $value->CustomerName,
+                    $value->Description
                 );
                 array_push($arrData,$rows);
             }
@@ -137,39 +149,33 @@ class CustomerController extends Controller
         $getAuth = $this->validateAuth($request->_s);
         if ($getAuth['status']) {
             if ($request->hdnFrmAction=="add") {
-                $query = "SELECT ID FROM ms_customer WHERE Name=?";
-                $isExist = DB::select($query, [$request->txtFrmName]);
-                if (!$isExist) {
-                    $query = "INSERT INTO ms_customer
-                                (ID, Name, LastPurchase, Status, CreatedDate, CreatedBy, ModifiedDate, ModifiedBy)
-                                VALUES(UUID(), ?, NULL, ?, NOW(), ?, NULL, NULL)";
-                    DB::insert($query, [
-                        $request->txtFrmName,
-                        $request->radFrmStatus,
-                        $getAuth['UserID']
-                    ]);
-                    $return['message'] = "Data has been saved!";
-                    $return['callback'] = "doReloadTable()";
-                } else {
-                    $return['status'] = false;
-                    $return['message'] = "Customer already registered";
-                }
+                $query = "INSERT INTO tr_transaction
+                            (ID, TransactionDate, Status, Description, CustomerID, CreatedDate, CreatedBy, ModifiedDate, ModifiedBy)
+                            VALUES(UUID(), ?, ?, ?, ?, NOW(), ?, NULL, NULL)";
+                DB::insert($query, [
+                    $request->txtFrmTransactionDate,
+                    $request->radFrmStatus,
+                    $request->txtFrmDescription,
+                    $request->txtFrmCustomerID,
+                    $getAuth['UserID']
+                ]);
+                $return['message'] = "Data has been saved!";
+                $return['callback'] = "doReloadTable()";
             }
             if ($request->hdnFrmAction=="edit") {
-                $query = "UPDATE ms_customer
-                            SET Name=?,
-                                Status=?,
+                $query = "UPDATE tr_transaction
+                            SET CustomerID=?
                                 ModifiedDate=NOW(),
                                 ModifiedBy=?
                             WHERE ID=?";
                 DB::update($query, [
-                    $request->txtFrmName,
-                    $request->radFrmStatus,
+                    $request->txtFrmCustomerID,
                     $getAuth['UserID'],
                     $request->hdnFrmID
                 ]);
                 $return['message'] = "Data has been saved!";
                 $return['callback'] = "doReloadTable()";
+
             }
         } else $return = array('status'=>false,'message'=>"Not Authorized");
         return response()->json($return, 200);
@@ -566,10 +572,129 @@ class CustomerController extends Controller
         $return = array('status'=>true,'message'=>"",'data'=>null,'callback'=>"");
         $getAuth = $this->validateAuth($request->_s);
         if ($getAuth['status']) {
-            $query = "DELETE FROM ms_customer WHERE ID=?";
+            $query = "DELETE FROM tr_transaction WHERE ID=?";
             DB::delete($query, [$request->_i]);
             $return['message'] = "Data has been removed!";
             $return['callback'] = "doReloadTable()";
+        } else $return = array('status'=>false,'message'=>"Not Authorized");
+        return response()->json($return, 200);
+    }
+
+    public function getItems(Request $request)
+    {
+        $return = array('status'=>true,'message'=>"",'data'=>array(),'callback'=>"");
+        $getAuth = $this->validateAuth($request->_s);
+        if ($getAuth['status']) {
+            if ($request->_i) {
+                $query = "SELECT tr.ID,
+                            p.Name ProductName,
+                            tr.Price,
+                            tr.Amount,
+                            (tr.Price * tr.Amount) Total,
+                            tr.Status
+                        FROM tr_transaction_detail tr
+                            LEFT JOIN ms_product p ON p.ID=tr.ProductID
+                        WHERE tr.TransactionID=?
+                        GROUP BY p.Name,
+                            tr.Price,
+                            tr.Amount,
+                            tr.Status,
+                            tr.ID
+                            ";
+                $data = DB::select($query,[$request->_i]);
+                if ($data) $return['data'] = $data;
+            }
+        } else $return = array('status'=>false,'message'=>"Not Authorized");
+        return response()->json($return, 200);
+    }
+
+    public function doSaveItem(Request $request)
+    {
+        $return = array('status'=>true,'message'=>"",'data'=>null,'callback'=>"");
+        $getAuth = $this->validateAuth($request->_s);
+        if ($getAuth['status']) {
+            if ($request->hdnFrmAction=="add") {
+                if (intval($request->txtFrmQty) > 0){
+                    $query = "SELECT ID, Name, Price, OnStock FROM ms_product WHERE ID = ?";
+                    $refData = DB::select($query, [$request->hdnFrmProductID]);
+                    if ($refData[0]->OnStock >= $request->txtFrmQty) {
+                        $query = "INSERT INTO tr_transaction_detail
+                                    (ID, TransactionID, Price, Amount, Status, ProductID)
+                                    VALUES(UUID(), ?, ?, ?, ?, ?)";
+                        DB::insert($query, [
+                            $request->txtFrmTransactionID,
+                            $refData[0]->Price,
+                            $request->txtFrmQty,
+                            '1',
+                            $request->hdnFrmProductID,
+                            $getAuth['UserID']
+                        ]);
+
+                        //Update Stock
+                        $newStock = $refData[0]->OnStock - $request->txtFrmQty;
+                        $query = "UPDATE ms_product SET OnStock=?,
+                                        ModifiedDate=NOW(),
+                                        ModifiedBy=?
+                                    WHERE ID=?";
+                        DB::update($query, [
+                            $newStock,
+                            $getAuth['UserID'],
+                            $request->hdnFrmProductID
+                        ]);
+
+                        //Update Last Purchase Customer
+                        $query = "SELECT ID, CustomerID, TransactionDate FROM tr_transaction WHERE ID = ?";
+                        $refDataTransaction = DB::select($query, [$request->txtFrmTransactionID]);
+
+                        if($refDataTransaction){
+                        $query = "UPDATE ms_customer SET LastPurchase=?,
+                                        ModifiedDate=NOW(),
+                                        ModifiedBy=?
+                                    WHERE ID=?";
+                        DB::update($query, [
+                            $refDataTransaction[0]->TransactionDate,
+                            $getAuth['UserID'],
+                            $refDataTransaction[0]->CustomerID
+                        ]);
+                        }
+
+                        $return['message'] = "Data has been saved!";
+                        $return['callback'] = "loadPage('transaction/detail/index','onDetailForm(`".$request->txtFrmTransactionID."`,true)')";
+                    } else $return = array('status'=>false,'message'=>"Stock < Amount");
+                } else $return = array('status'=>false,'message'=>"Amount must be greater than 0");
+            }
+        } else $return = array('status'=>false,'message'=>"Not Authorized");
+        return response()->json($return, 200);
+    }
+
+    public function doDeleteItem(Request $request)
+    {
+        $return = array('status'=>true,'message'=>"",'data'=>null,'callback'=>"");
+        $getAuth = $this->validateAuth($request->_s);
+        if ($getAuth['status']) {
+            $query = "SELECT ID, ProductID, Amount FROM tr_transaction_detail WHERE ID = ?";
+            $refData = DB::select($query, [$request->_i]);
+
+            $query = "SELECT ID, Name, Price, OnStock FROM ms_product WHERE ID = ?";
+            $ProductData = DB::select($query, [$refData[0]->ProductID]);
+
+             //Update Stock
+            $newStock = $ProductData[0]->OnStock + $refData[0]->Amount;
+            $query = "UPDATE ms_product SET OnStock=?,
+                            ModifiedDate=NOW(),
+                            ModifiedBy=?
+                        WHERE ID=?";
+            DB::update($query, [
+                $newStock,
+                $getAuth['UserID'],
+                $refData[0]->ProductID
+            ]);
+
+            $query = "DELETE FROM tr_transaction_detail WHERE ID=?";
+            DB::delete($query, [$request->_i]);
+
+            $return['message'] = "Data has been removed!";
+            $return['callback'] = "loadPage('transaction/detail/index','onDetailForm(`".$request->transactionID."`,true)')";
         } else $return = array('status'=>false,'message'=>"Not Authorized");
         return response()->json($return, 200);
     }

@@ -153,6 +153,25 @@ class StockController extends Controller
                     $getAuth['UserID'],
                     $request->txtFrmIncomingDate,
                 ]);
+
+                if($request->radFrmStatus == "1"){
+                    //Update Stock on Product
+                    $query = "SELECT ID,
+                            Name,
+                            OnStock
+                            FROM ms_product
+                            WHERE ID = ?";
+                    $dataProduct = DB::select($query, [$request->txtFrmProductID]);
+
+                    $onStockNew = $dataProduct[0]->OnStock + $request->txtFrmAmount;
+
+                    $query = "UPDATE ms_product SET OnStock=?, ModifiedDate=NOW(), ModifiedBy=? WHERE ID = ?";
+                    DB::update($query, [
+                        $onStockNew,
+                        $getAuth['UserID'],
+                        $request->txtFrmProductID,
+                    ]);
+                }
                 $return['message'] = "Data has been saved!";
                 $return['callback'] = "doReloadTable()";
             }
@@ -177,6 +196,66 @@ class StockController extends Controller
                 ]);
                 $return['message'] = "Data has been saved!";
                 $return['callback'] = "doReloadTable()";
+            }
+
+            if ($request->hdnFrmAction=="statusBulk") {
+                $arrData = explode(",",$request->hdnFrmID);
+                if (count($arrData)==0) {
+                    $return = array('status'=>false,'message'=>"Please select item first");
+                } else {
+                    foreach ($arrData as $key => $value) {
+                        //Update Stock on Product
+                        $query = "SELECT ID,
+                                Amount,
+                                ProductID
+                                FROM ms_stock
+                                WHERE ID = ?";
+                        $dataStock = DB::select($query, [$value]);
+
+                        $query = "SELECT ID,
+                                Name,
+                                OnStock
+                                FROM ms_product
+                                WHERE ID = ?";
+                        $dataProduct = DB::select($query, [$dataStock[0]->ProductID]);
+
+                        if($request->selFrmStatus == "1"){
+                            $onStockNew = $dataProduct[0]->OnStock + $dataStock[0]->Amount;
+
+                            $query = "UPDATE ms_product SET OnStock=?, ModifiedDate=NOW(), ModifiedBy=? WHERE ID = ?";
+                            DB::update($query, [
+                                $onStockNew,
+                                $getAuth['UserID'],
+                                $dataProduct[0]->ID,
+                            ]);
+                        }
+
+                        if($request->selFrmStatus == "2"){
+                            if($dataStock[0]->Amount > $dataProduct[0]->OnStock){
+                                $return = array('status'=>false,'message'=>"Data stock cannot be reduced again");
+                                return response()->json($return, 200);
+                            }
+                            $onStockNew = $dataProduct[0]->OnStock - $dataStock[0]->Amount;
+
+                            $query = "UPDATE ms_product SET OnStock=?, ModifiedDate=NOW(), ModifiedBy=? WHERE ID = ?";
+                            DB::update($query, [
+                                $onStockNew,
+                                $getAuth['UserID'],
+                                $dataProduct[0]->ID,
+                            ]);
+                        }
+                        //
+
+                        $query = "UPDATE ms_stock SET Status=?,ModifiedDate=NOW(),ModifiedBy=? WHERE ID=?";
+                        DB::update($query, [
+                            $request->selFrmStatus,
+                            $getAuth['UserID'],
+                            $value
+                        ]);
+                    }
+                    $return['message'] = count($arrData)." data has been saved!";
+                    $return['callback'] = "doReloadTable()";
+                }
             }
         } else $return = array('status'=>false,'message'=>"Not Authorized");
         return response()->json($return, 200);

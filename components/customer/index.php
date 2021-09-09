@@ -44,17 +44,6 @@
   <thead>
     <tr class="font-semibold tracking-wide text-left text-gray-500 bg-gray-100 uppercase border-b">
       <th class="px-4 py-3">
-        Item ID<br />
-        <input
-          id="txtFilterItemID"
-          name="txtFilterItemID"
-          type="text"
-          class="border p-2 rounded w-full mt-1 text-sm form-input focus:border-gray-400 focus:outline-none focus:shadow-outline-gray"
-          placeholder="Type here"
-          onkeyup="doSearchTableColumn(0,$('#txtFilterItemID').val())"
-        />
-      </th>
-      <th class="px-4 py-3">
         Customer Name<br />
         <input
           id="txtFilterName"
@@ -117,7 +106,6 @@
     "serverSide": true,
     "ordering": false,
     columns: [
-      { data:'ID', className:'px-4 py-3 text-sm' },
       { data:'Name', className:'px-4 py-3 text-sm' },
       { data:'LastPurchase', className:'px-4 py-3 text-sm' },
       {

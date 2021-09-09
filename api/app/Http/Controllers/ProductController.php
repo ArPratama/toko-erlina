@@ -50,11 +50,20 @@ class ProductController extends Controller
         $return = array('status'=>true,'message'=>"",'data'=>array(),'callback'=>"");
         $getAuth = $this->validateAuth($request->_s);
         if ($getAuth['status']) {
-            $mainQuery = "SELECT ID, Name, Price, CreatedDate, CreatedBy,ModifiedDate, ModifiedBy, Description, Status
-                            FROM ms_product
-                            WHERE {definedFilter}
-                            ORDER BY CreatedDate DESC
-                            {Limit}";
+            $mainQuery = "SELECT ID,
+            Name,
+            Price,
+            OnStock,
+            CreatedDate,
+            CreatedBy,
+            ModifiedDate,
+            ModifiedBy,
+            Description,
+            Status
+            FROM ms_product
+            WHERE {definedFilter}
+            ORDER BY CreatedDate DESC
+            {Limit}";
             $definedFilter = "Status=1";
             if ($request->_i) {
                 $definedFilter = "ID=?";
@@ -112,6 +121,7 @@ class ProductController extends Controller
                 "ITEM ID",
                 "NAME",
                 "PRICE",
+                "ON STOCK",
                 "DESCRIPTION",
                 "CREATED DATE",
                 "CREATED BY",
@@ -123,6 +133,7 @@ class ProductController extends Controller
                     $value->ID,
                     $value->Name,
                     $value->Price,
+                    $value->OnStock,
                     $value->Description,
                     $value->CreatedDate,
                     $value->CreatedBy,
@@ -591,7 +602,9 @@ class ProductController extends Controller
             $keywords = $this->sanitizeString($request->_i);
             $query = "SELECT ID,
                     Name,
-                    Description
+                    Description,
+                    OnStock,
+                    Price
                     FROM ms_product
                     WHERE Status=1
                     AND (Name LIKE '%$keywords%' OR Description LIKE '%$keywords%')

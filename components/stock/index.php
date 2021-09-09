@@ -12,6 +12,13 @@
   </button>
 </div>
 -->
+<button
+  id="btnBulkStatus"
+  onclick="showBulkStatusConfirm()"
+  class="w-38 float-left mb-6 mr-2 hidden sm:block px-4 py-2 text-sm text-white bg-blue-600 border border-transparent rounded-lg active:bg-blue-600 hover:bg-blue-700 focus:outline-none focus:shadow-outline-blue"
+>
+  Update Status
+</button>
 
 <button
   id="btnFrmAdd"
@@ -44,15 +51,12 @@
   <thead>
     <tr class="font-semibold tracking-wide text-left text-gray-500 bg-gray-100 uppercase border-b">
       <th class="px-4 py-3">
-        Item ID<br />
-        <input
-          id="txtFilterItemID"
-          name="txtFilterItemID"
-          type="text"
-          class="border p-2 rounded w-full mt-1 text-sm form-input focus:border-gray-400 focus:outline-none focus:shadow-outline-gray"
-          placeholder="Type here"
-          onkeyup="doSearchTableColumn(0,$('#txtFilterItemID').val())"
-        />
+        <!--<input
+          name="chkRemember"
+          type="checkbox"
+          class="text-blue-600 form-checkbox focus:border-blue-400 focus:outline-none focus:shadow-outline-blue"
+        />-->
+        &nbsp;
       </th>
       <th class="px-4 py-3">
         Product Name<br />
@@ -138,7 +142,15 @@
     "serverSide": true,
     "ordering": false,
     columns: [
-      { data:'ID', className:'px-4 py-3 text-sm' },
+            {
+        data:'ID',
+        className:'px-4 py-3 text-sm',
+        render: function (data, type, full, meta) {
+          var html = '';
+          html = '<input name="chkRemember" type="checkbox" class="text-blue-600 chkListItem form-checkbox focus:border-blue-400 focus:outline-none focus:shadow-outline-blue" value="'+data+'" data-status="'+full['StatusID']+'"/>';
+          return html
+        },
+      },
       { data:'ProductName', className:'px-4 py-3 text-sm' },
       { data:'Amount', className:'px-4 py-3 text-sm' },
       {
@@ -209,6 +221,25 @@
 
   function downloadExcel() {
     window.location=apiUrl+'/stock/get?_export=true&_s='+getCookie(MSG['cookiePrefix']+'AUTH-TOKEN');
+  }
+
+  function showBulkStatusConfirm() {
+    var selected = 0;
+    var selectedID = '';
+    $('.chkListItem').each(function(i, obj) {
+        if ($(this).prop('checked')) {
+          selected++;
+          if (selectedID != '') {
+            selectedID += ',';
+          }
+          selectedID += $(this).val();
+        }
+    });
+    if (selected == 0) {
+      Swal.fire({title:'Error', text: 'Please select item first', icon:'error'});
+    } else {
+      loadModal('stock/statusBulk','onDetailForm('+selected+',\''+selectedID+'\')');
+    }
   }
 
   function showDeleteConfirm(ID,Label) {

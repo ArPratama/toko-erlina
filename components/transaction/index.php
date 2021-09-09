@@ -1,7 +1,7 @@
 <!--
   <div class="relative text-gray-600 w-52 mb-6 float-left">
   <input 
-    id="txtSearch_tblproducts" 
+    id="txtSearch_tbltransaction"
     placeholder="Search" 
     class="bg-white h-10 px-5 pr-10 rounded-lg text-sm focus:outline-none border"
     onkeyup="doSearchTable()">
@@ -15,7 +15,7 @@
 
 <button
   id="btnFrmAdd"
-  onclick="loadModal('products/form')"
+  onclick="loadModal('transaction/form')"
   class="w-32 float-right mb-6 px-4 py-2 text-sm text-white bg-blue-600 border border-transparent rounded-lg active:bg-blue-600 hover:bg-blue-700 focus:outline-none focus:shadow-outline-blue"
   style="display:none"
 >
@@ -24,7 +24,7 @@
 
 <button
   id="btnFrmBulk"
-  onclick="loadModal('products/bulk')"
+  onclick="loadModal('transaction/bulk')"
   class="w-38 float-right mb-6 mr-2 hidden sm:block px-4 py-2 text-sm text-white bg-blue-600 border border-transparent rounded-lg active:bg-blue-600 hover:bg-blue-700 focus:outline-none focus:shadow-outline-blue"
   style="display:none"
 >
@@ -40,18 +40,42 @@
   Export to Excel
 </button>
 
-<table id="tblproducts" class="w-full whitespace-nowrap">
+<table id="tbltransaction" class="w-full whitespace-nowrap">
   <thead>
     <tr class="font-semibold tracking-wide text-left text-gray-500 bg-gray-100 uppercase border-b">
       <th class="px-4 py-3">
-        Product Name<br />
+        Transaction Date<br />
         <input
-          id="txtFilterProduct"
-          name="txtFilterProduct"
+          id="txtFilterTransactionDate"
+          name="txtFilterTransactionDate"
           type="text"
           class="border p-2 rounded w-full mt-1 text-sm form-input focus:border-gray-400 focus:outline-none focus:shadow-outline-gray"
           placeholder="Type here"
-          onkeyup="doSearchTableColumn(1,$('#txtFilterProduct').val())"
+          onkeyup="doSearchTableColumn(0,$('#txtFilterTransactionDate').val())"
+          disabled
+        />
+      </th>
+      <th class="px-4 py-3">
+        Status<br />
+        <input
+          id="txtFilterStatus"
+          name="txtFilterStatus"
+          type="text"
+          class="border p-2 rounded w-full mt-1 text-sm form-input focus:border-gray-400 focus:outline-none focus:shadow-outline-gray"
+          placeholder="Type here"
+          onkeyup="doSearchTableColumn(1,$('#txtFilterStatus').val())"
+          disabled
+        />
+      </th>
+      <th class="px-4 py-3">
+        Customer Name<br />
+        <input
+          id="txtFilterCustomerName"
+          name="txtFilterCustomerName"
+          type="text"
+          class="border p-2 rounded w-full mt-1 text-sm form-input focus:border-gray-400 focus:outline-none focus:shadow-outline-gray"
+          placeholder="Type here"
+          onkeyup="doSearchTableColumn(2,$('#txtFilterCustomerName').val())"
         />
       </th>
       <th class="px-4 py-3">
@@ -62,39 +86,7 @@
           type="text"
           class="border p-2 rounded w-full mt-1 text-sm form-input focus:border-gray-400 focus:outline-none focus:shadow-outline-gray"
           placeholder="Type here"
-          onkeyup="doSearchTableColumn(2,$('#txtFilterDescription').val())"
-        />
-      </th>
-      <th class="px-4 py-3 text-left">
-        Price<br />
-        <input
-          id="txtFilterPrice"
-          name="txtFilterPrice"
-          type="text"
-          class="bg-gray-100 border p-2 rounded w-full mt-1 text-sm form-input focus:border-gray-400 focus:outline-none focus:shadow-outline-gray"
-          placeholder="Type here"
-          disabled
-        />
-      </th>
-            <th class="px-4 py-3 text-left">
-        On Stock<br />
-        <input
-          id="txtFilterOnStock"
-          name="txtFilterOnStock"
-          type="text"
-          class="bg-gray-100 border p-2 rounded w-full mt-1 text-sm form-input focus:border-gray-400 focus:outline-none focus:shadow-outline-gray"
-          placeholder="Type here"
-          disabled
-        />
-      </th>
-      <th class="px-4 py-3">
-        Status<br />
-        <input
-          id="txtFilterStatus"
-          name="txtFilterStatus"
-          type="text"
-          class="bg-gray-100 border p-2 rounded w-full mt-1 text-sm form-input focus:border-gray-400 focus:outline-none focus:shadow-outline-gray"
-          placeholder="Type here"
+          onkeyup="doSearchTableColumn(3,$('#txtFilterDescription').val())"
           disabled
         />
       </th>
@@ -105,16 +97,16 @@
 
 <script>
   Pace.restart();
-  $('#tblproducts').DataTable( {
+  $('#tbltransaction').DataTable( {
     ajax: {
-      url: apiUrl+'/products/get?_s='+getCookie(MSG['cookiePrefix']+'AUTH-TOKEN'),
+      url: apiUrl+'/transaction/get?_s='+getCookie(MSG['cookiePrefix']+'AUTH-TOKEN'),
       beforeSend: function(e, t, i) { doBeforeSend(); },
       error: function(e, t, i) { doHandleError(e, t, i) },
       complete: function (result) {
         if (parseInt(result.responseJSON.recordsTotal) == 0) {
-          $('#tblproducts tbody').html('');
-          $('#tblproducts_info').html('Showing 0 to 0 of 0 entries')
-          $('#tblproducts_paginate').html('<div><a class="px-3 py-1 rounded-md cursor-pointer previous disabled">Previous</a><span></span><a class="px-3 py-1 rounded-md cursor-pointer next disabled">Next</a></div>');
+          $('#tbltransaction tbody').html('');
+          $('#tbltransaction_info').html('Showing 0 to 0 of 0 entries')
+          $('#tbltransaction_paginate').html('<div><a class="px-3 py-1 rounded-md cursor-pointer previous disabled">Previous</a><span></span><a class="px-3 py-1 rounded-md cursor-pointer next disabled">Next</a></div>');
         } 
         Swal.close(); 
       },
@@ -127,17 +119,7 @@
     "serverSide": true,
     "ordering": false,
     columns: [
-      { data:'Name', className:'px-4 py-3 text-sm' },
-      { data:'Description', className:'px-4 py-3 text-sm' },
-      { 
-        data:'Price',
-        className:'px-4 py-3 text-sm text-left',
-        render: function (data, type, full, meta) {
-          var html = doFormatNumber(data);
-          return html
-        },
-      },
-      { data:'OnStock', className:'px-4 py-3 text-sm' },
+      { data:'TransactionDate', className:'px-4 py-3 text-sm' },
       {
         data:'Status',
         className:'px-4 py-3 text-sm',
@@ -146,6 +128,8 @@
           return html
         },
       },
+      { data:'CustomerName', className:'px-4 py-3 text-sm' },
+      { data:'Description', className:'px-4 py-3 text-sm' },
       {
         data:'ID',
         render: function (data, type, full, meta) {
@@ -162,7 +146,7 @@
                             '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />' +
                           '</svg>' +
                         '</div>' +
-                        '<div onclick="showDeleteConfirm(\''+full['ID']+'\',\''+full['Name']+'\')" class="w-4 mr-2 transform hover:text-blue-500 hover:scale-110 cursor-pointer">' +
+                        '<div onclick="showDeleteConfirm(\''+full['ID']+'\')" class="w-4 mr-2 transform hover:text-blue-500 hover:scale-110 cursor-pointer">' +
                           '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">' +
                             '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />' +
                           '</svg>' +
@@ -187,41 +171,41 @@
 
   function doReloadTable() {
     Pace.restart();
-    $('#tblproducts').DataTable().ajax.reload();
+    $('#tbltransaction').DataTable().ajax.reload();
     modal.close();
   }
 
   function doSearchTable() {
-    $('#tblproducts').DataTable().search( $('#txtSearch_tblproducts').val() ).draw();
+    $('#tbltransaction').DataTable().search( $('#txtSearch_tbltransaction').val() ).draw();
   }
 
   function doSearchTableColumn(column,value) {
     value = value.trim();
     if (value.length >= 0) {
       setTimeout(function(){  
-        $('#tblproducts').DataTable().columns( column ).search( value ).draw();
+        $('#tbltransaction').DataTable().columns( column ).search( value ).draw();
       }, 1000);
     }
   }
 
   function showDetailView(ID) {
-    loadModal('products/view','onDetailForm(\''+ID+'\')');
+    loadPage('transaction/detail/index','onDetailForm(\''+ID+'\')');
   }
 
   function showDetailForm(ID) {
-    loadModal('products/form','onDetailForm(\''+ID+'\')');
+    loadModal('transaction/form','onDetailForm(\''+ID+'\')');
   }
 
   function downloadExcel() {
-    window.location=apiUrl+'/products/get?_export=true&_s='+getCookie(MSG['cookiePrefix']+'AUTH-TOKEN');
+    window.location=apiUrl+'/transaction/get?_export=true&_s='+getCookie(MSG['cookiePrefix']+'AUTH-TOKEN');
   }
 
-  function showDeleteConfirm(ID,Label) {
-    Swal.fire({html:'Do you want to delete <strong>'+Label+'</strong> ?', icon:'warning', showCancelButton:true, confirmButtonText: 'Yes', cancelButtonText: 'No'})
+  function showDeleteConfirm(ID) {
+    Swal.fire({html:'Do you want to delete ?', icon:'warning', showCancelButton:true, confirmButtonText: 'Yes', cancelButtonText: 'No'})
     .then((result) => {
       if (result.isConfirmed) {
         var param = '_i='+ID;
-        doSubmit('products/doDelete',param);
+        doSubmit('transaction/doDelete',param);
       }
     });
   }

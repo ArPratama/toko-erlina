@@ -1,54 +1,44 @@
-<form id="frmStock" onsubmit="return doSubmitForm(event,'stock/doSave','frmStock')" enctype="multipart/form-data">
+<form id="frmTransaction" onsubmit="return doSubmitForm(event,'transaction/doSave','frmTransaction')" enctype="multipart/form-data">
   <div class="mt-4 mb-6">
-    <div id="lblMdlTitle" class="mb-2 text-lg font-semibold text-gray-700">Add New Stock</div>
+    <div id="lblMdlTitle" class="mb-2 text-lg font-semibold text-gray-700">Add New Transaction</div>
     <div class="text-sm text-gray-700">
       <p class="text-gray-400 mb-8">Please fill all the required fields marked with (*) symbol before saving this form</p>
       <label class="block mt-4">
-        <span>Product Name *</span>
+        <span>Transaction Date *</span>
         <input
-          id="txtFrmName"
-          name="txtFrmName"
+          id="txtFrmTransactionDate"
+          name="txtFrmTransactionDate"
+          type="datetime-local"
+          maxlength="100"
+          class="border p-2 rounded w-full mt-1 text-sm form-input focus:border-gray-400 focus:outline-none focus:shadow-outline-gray"
+          placeholder="Type here"
+          required
+        />
+      </label>
+
+      <label class="block mt-4">
+        <span>Customer Name</span>
+        <input
+          id="txtFrmCustomerName"
+          name="txtFrmCustomerName"
           type="text"
           maxlength="100"
           class="border p-2 rounded w-full mt-1 text-sm form-input focus:border-gray-400 focus:outline-none focus:shadow-outline-gray"
           placeholder="Type here"
           required
         />
-        <input type="hidden" id="txtFrmProductID" name="txtFrmProductID">
+        <input type="hidden" id="txtFrmCustomerID" name="txtFrmCustomerID">
       </label>
 
       <label class="block mt-4">
-        <span>Amount</span>
+        <span>Description</span>
         <input
-          id="txtFrmAmount"
-          name="txtFrmAmount"
-          type="number"
+          id="txtFrmDescription"
+          name="txtFrmDescription"
+          type="text"
           maxlength="250"
           class="border p-2 rounded w-full mt-1 text-sm form-input focus:border-gray-400 focus:outline-none focus:shadow-outline-gray"
           placeholder="Type here"
-        />
-      </label>
-
-      <label class="block mt-4">
-        <span>Source</span>
-        <input
-          id="txtFrmSource"
-          name="txtFrmSource"
-          type="text"
-          class="border p-2 rounded w-full mt-1 text-sm form-input focus:border-gray-400 focus:outline-none focus:shadow-outline-gray"
-          placeholder="Type here"
-        />
-      </label>
-
-      <label class="block mt-4">
-        <span>Incoming Date</span>
-        <input
-          id="txtFrmIncomingDate"
-          name="txtFrmIncomingDate"
-          type="datetime-local"
-          class="border p-2 rounded w-full mt-1 text-sm form-input focus:border-gray-400 focus:outline-none focus:shadow-outline-gray"
-          placeholder="Type here"
-          required
         />
       </label>
 
@@ -64,17 +54,17 @@
               value="1"
               checked
             />
-            <span class="ml-2">Display</span>
+            <span class="ml-2">Active</span>
           </label>
           <label class="inline-flex items-center ml-6">
             <input
-              id="radFrmStatus_2"
+              id="radFrmStatus_0"
               name="radFrmStatus"
               type="radio"
               class="text-blue-600 form-radio focus:border-blue-400 focus:outline-none focus:shadow-outline-gray"
-              value="2"
+              value="0"
             />
-            <span class="ml-2">On Storage</span>
+            <span class="ml-2">Inactive</span>
           </label>
         </div>
       </div>
@@ -163,20 +153,20 @@
 <script>
 
   function onDetailForm(ID) {
-    $('#lblMdlTitle').html('Edit Stock Details');
+    $('#lblMdlTitle').html('Edit Transaction Details');
     $('#hdnFrmID').val(ID);
     $('#hdnFrmAction').val('edit');
-    doFetch('stock/get','_i='+ID);
+    doFetch('transaction/get','_i='+ID);
   }
   function onCompleteFetch(data) {
     Swal.close();
-    $('#txtFrmName').val(data.ProductName);
-    $('#txtFrmAmount').val(data.Amount);
-    $('#txtFrmSource').val(data.Source);
+    $('#txtFrmCustomerName').val(data.CustomerName);
+    $('#txtFrmDescription').val(data.Description);
+    $('#txtFrmTransactionDate').val(data.TransactionDate);
     $('#radFrmStatus_'+data.Status).prop('checked', true);
   }
 
-var delay = (function(){
+  var delay = (function(){
   var timer = 0;
   return function(callback, ms){
   clearTimeout (timer);
@@ -184,29 +174,29 @@ var delay = (function(){
  };
 })();
 
-  $('#txtFrmName').keyup(function() {
-    $('#txtFrmProductID').val('');
+  $('#txtFrmCustomerName').keyup(function() {
+    $('#txtFrmCustomerID').val('');
     delay(function(){
-        var value = $('#txtFrmName').val();
-        fetchProductInfo();
+        var value = $('#txtFrmCustomerName').val();
+        fetchCustomerInfo();
     }, 1000 );
   });
 
- function fetchProductInfo() {
-    var value = $('#txtFrmName').val();
+ function fetchCustomerInfo() {
+    var value = $('#txtFrmCustomerName').val();
     if (value) {
-        doFetch('products/doLookup','_i='+value+'&_cb=onCompleteFetchProductInfo',loading=false);
+        doFetch('customer/doLookup','_i='+value+'&_cb=onCompleteFetchCustomerInfo',loading=false);
     }
   }
 
-  function onCompleteFetchProductInfo(data) {
+  function onCompleteFetchCustomerInfo(data) {
     Swal.close();
     var ProductArr = [];
     for (i=0;i<data.length;i++) {
-      var formatData = data[i].Name + ' ' + data[i].Description + ' ['+ data[i].ID + ']';
+      var formatData = data[i].Name + ' ['+ data[i].ID + ']';
       ProductArr.push(formatData);
     }
-    $( '#txtFrmName' ).autocomplete({
+    $( '#txtFrmCustomerName' ).autocomplete({
       minLength: 0,
       autoFocus: true,
       source: function (request, response) {
@@ -218,9 +208,10 @@ var delay = (function(){
             ui.item.label.lastIndexOf("[") + 1,
             ui.item.label.lastIndexOf("]")
         );
-        $('#txtFrmProductID').val(ProductID);
+        console.log(ProductID);
+        $('#txtFrmCustomerID').val(ProductID);
       }
     });
-    $('#txtFrmName').autocomplete("search", $('#txtFrmName').val());
+    $('#txtFrmCustomerName').autocomplete("search", $('#txtFrmCustomerName').val());
     }
 </script>

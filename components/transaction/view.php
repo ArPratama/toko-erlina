@@ -13,13 +13,8 @@
     </label>
 
     <label class="block mt-4">
-      <span class="block text-gray-500">Price :</span>
+      <span class="block text-gray-500">Price (RRP):</span>
       <span id="lblFrmPrice" class="block"></span>
-    </label>
-
-        <label class="block mt-4">
-      <span class="block text-gray-500">On Stock:</span>
-      <span id="lblFrmOnStock" class="block"></span>
     </label>
 
     <div class="block mt-4">
@@ -47,7 +42,6 @@
     $('#lblFrmName').html(data.Name);
     $('#lblFrmDescription').html(data.Description);
     $('#lblFrmPrice').html(doFormatNumber(data.Price));
-    $('#lblFrmOnStock').html(doFormatNumber(data.OnStock));
     $('#lblFrmStatus').html(status);
   }
 </script>
