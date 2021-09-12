@@ -1,8 +1,8 @@
 <div class="float-left">
-  <span class="text-xs text-gray-500 block">Filter by Transaction Date: </span>
+  <span class="text-xs text-gray-500 block">Filter by Last Purchase: </span>
   <input
-    id="txtFilterStartOrderDate"
-    name="txtFilterStartOrderDate"
+    id="txtFilterStartLastPurchaseDate"
+    name="txtFilterStartLastPurchaseDate"
     type="date"
     maxlength="50"
     class="border p-2 rounded w-30 text-sm text-gray-500 form-input focus:border-gray-400 focus:outline-none focus:shadow-outline-gray"
@@ -10,26 +10,14 @@
     onchange="doReloadTable()"
   />
   <input
-    id="txtFilterEndOrderDate"
-    name="txtFilterEndOrderDate"
+    id="txtFilterEndLastPurchaseDate"
+    name="txtFilterEndLastPurchaseDate"
     type="date"
     maxlength="50"
     class="border p-2 rounded w-30 sm:mr-2 text-sm text-gray-500 form-input focus:border-gray-400 focus:outline-none focus:shadow-outline-gray"
     placeholder="Type here"
     onchange="doReloadTable()"
   />
-</div>
-<div class="relative text-gray-600 w-52 mb-6 float-left mt-4">
-        <input
-          id="txtFrmName"
-          name="txtFrmName"
-          type="text"
-          maxlength="100"
-          class="border p-2 rounded w-full mt-1 text-sm form-input focus:border-gray-400 focus:outline-none focus:shadow-outline-gray"
-          placeholder="Type here"
-          required
-        />
-        <input type="hidden" id="txtFrmProductID" name="txtFrmProductID">
 </div>
 <div class="txtSearch_tblreports_class relative text-gray-600 w-52 mb-6 float-left mr-5 mt-4">
   <input
@@ -63,11 +51,10 @@
 <table id="tblreports" class="w-full whitespace-nowrap">
   <thead>
     <tr class="font-semibold tracking-wide text-left text-gray-500 bg-gray-100 uppercase border-b">
-      <th class="px-4 py-3">Product Name</th>
-      <th class="px-4 py-3">Amount</th>
+      <th class="px-4 py-3">Last Purchase</th>
+      <th class="px-4 py-3">Customer Name</th>
+      <th class="px-4 py-3">Purchase Amount</th>
       <th class="px-4 py-3">Status</th>
-      <th class="px-4 py-3">Source</th>
-      <th class="px-4 py-3">IncomingDate</th>
     </tr>
   </thead>
 </table>
@@ -150,22 +137,27 @@
       $('#tblreports').DataTable().destroy();
       $('#tblreports').DataTable( {
         ajax: {
-          url: apiUrl+'/reports/getStock',
+          url: apiUrl+'/reports/getCustomer',
           data: function(d) {
-            d.productName = $('#imeiInput').val();
-            d.startIncomingDate = $('#txtFilterStartOrderDate').val();
-            d.endIncomingDate = $('#txtFilterEndOrderDate').val();
+            d.startLastPurchaseDate = $('#txtFilterStartLastPurchaseDate').val();
+            d.endLastPurchaseDate = $('#txtFilterEndLastPurchaseDate').val();
             d._s = getCookie(MSG['cookiePrefix']+'AUTH-TOKEN');
       },
         },
         "paging": false,
         "ordering": false,
         columns: [
-          { data:'IncomingDate', className:'px-4 py-3 text-sm' },
-          { data:'ProductName', className:'px-4 py-3 text-sm' },
-          { data:'Amount', className:'px-4 py-3 text-sm' },
-          { data:'Source', className:'px-4 py-3 text-sm' },
-          { data:'Status', className:'px-4 py-3 text-sm' }
+          { data:'LastPurchase', className:'px-4 py-3 text-sm' },
+          { data:'Name', className:'px-4 py-3 text-sm' },
+          { data:'PurchaseAmount', className:'px-4 py-3 text-sm' },
+          {
+            data:'Status',
+            className:'px-4 py-3 text-sm',
+            render: function (data, type, full, meta) {
+              var html = data==1 ? '<span class="px-2 py-1 font-semibold leading-tight text-green-700 bg-green-100 rounded-full">Active</span>' : '<span class="px-2 py-1 font-semibold leading-tight text-white bg-red-400 rounded-full">Inactive</span>';
+              return html
+            },
+          }
         ],
         'dom': '<"w-full overflow-x-auto rounded-lg"t<"grid px-4 py-3 text-xs tracking-wide text-gray-500 border-t bg-gray-50 sm:grid-cols-9"<"flex items-center col-span-3"i><"col-span-2"><"flex col-span-4 mt-2 sm:mt-auto sm:justify-end"<"inline-flex items-center"p>>>>'
       });
@@ -176,66 +168,19 @@
     $('#tblreports').DataTable().search( $('#txtSearch_tblreports').val() ).draw();
   }
 
-  var delay = (function(){
-  var timer = 0;
-  return function(callback, ms){
-  clearTimeout (timer);
-  timer = setTimeout(callback, ms);
- };
-})();
-
-  $('#productInput').keyup(function() {
-    $('#txtFrmProductID').val('');
-    delay(function(){
-        var value = $('#txtFrmName').val();
-        fetchProductInfo();
-    }, 1000 );
-  });
-
-  function fetchIMEI() {
-    doFetch('global/getIMEI','_cb=onCompleteFetchIMEI&type=SalesByModel&_p=',false);
-  }
-
-  function onCompleteFetchIMEI(data) {
-    var html = '';
-    var imeiArr = [];
-    for (i=0;i<data.length;i++) {
-      imeiArr.push(data[i].IMEI);
-    }
-
-    $('.imeiSelClass').attr('placeholder', 'Search IMEI')
-    $('.imeiSelClass').prop("disabled",false);
-
-    $( "#imeiInput" ).autocomplete({
-      minLength: 3,
-      source: function (request, response) {
-        var results = $.ui.autocomplete.filter(imeiArr, request.term);
-        response(results.slice(0, 10));
-      }
-    });
-    }
-
-    $('.imeiSelClass').keypress(function(event){
-        var keycode = (event.keyCode ? event.keyCode : event.which);
-        if(keycode == '13'){
-            doReloadTable();
-        }
-    });
-
   function doReloadTable() {
      initDataTable();
      $('#tblreports').show();
   }
 
   function ShowAllData() {
-     $('#imeiInput').val("");
-     $('#txtFilterStartOrderDate').val("");
-     $('#txtFilterEndOrderDate').val("");
+     $('#txtFilterStartLastPurchaseDate').val("");
+     $('#txtFilterEndLastPurchaseDate').val("");
      $('#tblreports').show();
      initDataTable();
     }
 
   function downloadExcel() {
-    window.location=apiUrl+'/reports/getSalesByModel?_export=true&' + 'imei=' + $('#imeiInput').val() + '&startOrderDate='+$('#txtFilterStartOrderDate').val() + '&endOrderDate='+$('#txtFilterEndOrderDate').val() + '&_s='+getCookie(MSG['cookiePrefix']+'AUTH-TOKEN');
+    window.location=apiUrl+'/reports/getCustomer?_export=true&' + '&startLastPurchaseDate='+$('#txtFilterStartLastPurchaseDate').val() + '&endLastPurchaseDate='+$('#txtFilterEndLastPurchaseDate').val() + '&_s='+getCookie(MSG['cookiePrefix']+'AUTH-TOKEN');
   }
 </script>

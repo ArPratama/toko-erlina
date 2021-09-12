@@ -210,6 +210,6 @@
   }
 
   function downloadExcel() {
-    window.location=apiUrl+'/reports/getPurchasing?_export=true&' + 'imei=' + $('#txtFrmName').val() + '&startTransactionDate='+$('#txtFilterStartTransactionDate').val() + '&endTransactionDate='+$('#txtFilterEndTransactionDate').val() + '&_s='+getCookie(MSG['cookiePrefix']+'AUTH-TOKEN');
+    window.location=apiUrl+'/reports/getPurchasing?_export=true&' + '&startTransactionDate='+$('#txtFilterStartTransactionDate').val() + '&endTransactionDate='+$('#txtFilterEndTransactionDate').val() + '&_s='+getCookie(MSG['cookiePrefix']+'AUTH-TOKEN');
   }
 </script>

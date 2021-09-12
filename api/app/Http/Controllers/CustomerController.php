@@ -55,7 +55,7 @@ class CustomerController extends Controller
                             WHERE {definedFilter}
                             ORDER BY CreatedDate DESC
                             {Limit}";
-            $definedFilter = "Status=1";
+            $definedFilter = "1=1";
             if ($request->_i) {
                 $definedFilter = "ID=?";
                 $mainQuery = str_replace("{Limit}",'',$mainQuery);
