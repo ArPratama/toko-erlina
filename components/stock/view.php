@@ -43,7 +43,7 @@
   }
   function onCompleteFetch(data) {
     Swal.close();
-    var status = html = data.Status==1 ? '<span class="px-2 py-1 font-semibold leading-tight text-green-700 bg-green-100 rounded-full">Display</span>' : '<span class="px-2 py-1 font-semibold leading-tight text-white bg-red-400 rounded-full">On Stock</span>';
+    var status = html = data.Status==1 ? '<span class="px-2 py-1 font-semibold leading-tight text-green-700 bg-green-100 rounded-full">Display</span>' : '<span class="px-2 py-1 font-semibold leading-tight text-white bg-red-400 rounded-full">On Storage</span>';
     $('#lblFrmName').html(data.ProductName);
     $('#lblFrmAmount').html(data.Amount);
     $('#lblFrmSource').html(data.Source);

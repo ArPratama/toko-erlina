@@ -159,6 +159,26 @@ class TransactionController extends Controller
                     $request->txtFrmCustomerID,
                     $getAuth['UserID']
                 ]);
+
+                //Update Last Purchase Customer
+                $query = "SELECT ID, PurchaseAmount FROM ms_customer WHERE ID = ?";
+                $refDataCustomer = DB::select($query, [$request->txtFrmCustomerID]);
+
+                if($refDataCustomer){
+                    $newPurchaseAmount = $refDataCustomer[0]->PurchaseAmount + 1;
+                    $query = "UPDATE ms_customer SET
+                                    LastPurchase=?,
+                                    PurchaseAmount=?,
+                                    ModifiedDate=NOW(),
+                                    ModifiedBy=?
+                                WHERE ID=?";
+                    DB::update($query, [
+                        $request->txtFrmTransactionDate,
+                        $newPurchaseAmount,
+                        $getAuth['UserID'],
+                        $request->txtFrmCustomerID
+                    ]);
+                }
                 $return['message'] = "Data has been saved!";
                 $return['callback'] = "doReloadTable()";
             }
@@ -641,22 +661,6 @@ class TransactionController extends Controller
                             $getAuth['UserID'],
                             $request->hdnFrmProductID
                         ]);
-
-                        //Update Last Purchase Customer
-                        $query = "SELECT ID, CustomerID, TransactionDate FROM tr_transaction WHERE ID = ?";
-                        $refDataTransaction = DB::select($query, [$request->txtFrmTransactionID]);
-
-                        if($refDataTransaction){
-                        $query = "UPDATE ms_customer SET LastPurchase=?,
-                                        ModifiedDate=NOW(),
-                                        ModifiedBy=?
-                                    WHERE ID=?";
-                        DB::update($query, [
-                            $refDataTransaction[0]->TransactionDate,
-                            $getAuth['UserID'],
-                            $refDataTransaction[0]->CustomerID
-                        ]);
-                        }
 
                         $return['message'] = "Data has been saved!";
                         $return['callback'] = "loadPage('transaction/detail/index','onDetailForm(`".$request->txtFrmTransactionID."`,true)')";

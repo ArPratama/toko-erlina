@@ -1,5 +1,5 @@
 <div class="float-left">
-  <span class="text-xs text-gray-500 block">Filter by Last Order: </span>
+  <span class="text-xs text-gray-500 block">Filter by Transaction Date: </span>
   <input
     id="txtFilterStartOrderDate"
     name="txtFilterStartOrderDate"
@@ -20,9 +20,16 @@
   />
 </div>
 <div class="relative text-gray-600 w-52 mb-6 float-left mt-4">
-  <input id="imeiInput"
-   placeholder="Loading..."
-   class=" imeiSelClass bg-white h-10 px-5 rounded-lg w-30 text-sm focus:outline-none border filter grayscale blur-md contrast-200">
+        <input
+          id="txtFrmName"
+          name="txtFrmName"
+          type="text"
+          maxlength="100"
+          class="border p-2 rounded w-full mt-1 text-sm form-input focus:border-gray-400 focus:outline-none focus:shadow-outline-gray"
+          placeholder="Type here"
+          required
+        />
+        <input type="hidden" id="txtFrmProductID" name="txtFrmProductID">
 </div>
 <div class="txtSearch_tblreports_class relative text-gray-600 w-52 mb-6 float-left mr-5 mt-4">
   <input
@@ -56,14 +63,11 @@
 <table id="tblreports" class="w-full whitespace-nowrap">
   <thead>
     <tr class="font-semibold tracking-wide text-left text-gray-500 bg-gray-100 uppercase border-b">
-      <th class="px-4 py-3">SKU</th>
-      <th class="px-4 py-3">IMEI</th>
       <th class="px-4 py-3">Product Name</th>
-      <th class="px-4 py-3">Description</th>
-      <th class="px-4 py-3">Color</th>
-      <th class="px-4 py-3">Capacity</th>
-      <th class="px-4 py-3 text-right">Item Sold</th>
-      <th class="px-4 py-3">Last Order</th>
+      <th class="px-4 py-3">Amount</th>
+      <th class="px-4 py-3">Status</th>
+      <th class="px-4 py-3">Source</th>
+      <th class="px-4 py-3">IncomingDate</th>
     </tr>
   </thead>
 </table>
@@ -71,6 +75,7 @@
 <style>
 .ui-autocomplete {
     position: absolute;
+    max-height: 100px;
     top: 100%;
     left: 0;
     z-index: 1000;
@@ -96,6 +101,8 @@
     background-clip: padding-box;
     *border-right-width: 2px;
     *border-bottom-width: 2px;
+    overflow-y: auto;
+     overflow-x: hidden;
 }
 
 .ui-menu-item > a.ui-corner-all {
@@ -126,7 +133,7 @@
 .ui-autocomplete.ui-widget {
   font-size: 0.875rem;
   line-height: 1.25rem;
-  text-align: center;
+  text-align: left;
 }
 
 .ui-helper-hidden-accessible { display:none; }
@@ -136,8 +143,6 @@
 <script>
   Pace.restart();
   $('#tblreports').hide();
-  fetchIMEI();
-  $('.imeiSelClass').prop("disabled",true);
   $('.txtSearch_tblreports_class').hide();
 
   function initDataTable() {
@@ -145,25 +150,22 @@
       $('#tblreports').DataTable().destroy();
       $('#tblreports').DataTable( {
         ajax: {
-          url: apiUrl+'/reports/getSalesByModel',
+          url: apiUrl+'/reports/getStock',
           data: function(d) {
-            d.imei = $('#imeiInput').val();
-            d.startOrderDate = $('#txtFilterStartOrderDate').val();
-            d.endOrderDate = $('#txtFilterEndOrderDate').val();
+            d.productName = $('#imeiInput').val();
+            d.startIncomingDate = $('#txtFilterStartOrderDate').val();
+            d.endIncomingDate = $('#txtFilterEndOrderDate').val();
             d._s = getCookie(MSG['cookiePrefix']+'AUTH-TOKEN');
       },
         },
         "paging": false,
         "ordering": false,
         columns: [
-          { data:'SKU', className:'px-4 py-3 text-sm' },
-          { data:'IMEI', className:'px-4 py-3 text-sm' },
-          { data:'Product', className:'px-4 py-3 text-sm' },
-          { data:'Description', className:'px-4 py-3 text-sm' },
-          { data:'Color', className:'px-4 py-3 text-sm' },
-          { data:'Capacity', className:'px-4 py-3 text-sm' },
-          { data:'Total', className:'px-4 py-3 text-sm text-right' },
-          { data:'LastBook', className:'px-4 py-3 text-sm' },
+          { data:'IncomingDate', className:'px-4 py-3 text-sm' },
+          { data:'ProductName', className:'px-4 py-3 text-sm' },
+          { data:'Amount', className:'px-4 py-3 text-sm' },
+          { data:'Source', className:'px-4 py-3 text-sm' },
+          { data:'Status', className:'px-4 py-3 text-sm' }
         ],
         'dom': '<"w-full overflow-x-auto rounded-lg"t<"grid px-4 py-3 text-xs tracking-wide text-gray-500 border-t bg-gray-50 sm:grid-cols-9"<"flex items-center col-span-3"i><"col-span-2"><"flex col-span-4 mt-2 sm:mt-auto sm:justify-end"<"inline-flex items-center"p>>>>'
       });
@@ -173,6 +175,22 @@
   function doSearchTable() {
     $('#tblreports').DataTable().search( $('#txtSearch_tblreports').val() ).draw();
   }
+
+  var delay = (function(){
+  var timer = 0;
+  return function(callback, ms){
+  clearTimeout (timer);
+  timer = setTimeout(callback, ms);
+ };
+})();
+
+  $('#productInput').keyup(function() {
+    $('#txtFrmProductID').val('');
+    delay(function(){
+        var value = $('#txtFrmName').val();
+        fetchProductInfo();
+    }, 1000 );
+  });
 
   function fetchIMEI() {
     doFetch('global/getIMEI','_cb=onCompleteFetchIMEI&type=SalesByModel&_p=',false);

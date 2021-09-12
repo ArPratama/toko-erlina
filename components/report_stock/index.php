@@ -1,8 +1,8 @@
 <div class="float-left">
   <span class="text-xs text-gray-500 block">Filter by Incoming Date: </span>
   <input
-    id="txtFilterStartIncomingDate"
-    name="txtFilterStartIncomingDate"
+    id="txtFilterStartOrderDate"
+    name="txtFilterStartOrderDate"
     type="date"
     maxlength="50"
     class="border p-2 rounded w-30 text-sm text-gray-500 form-input focus:border-gray-400 focus:outline-none focus:shadow-outline-gray"
@@ -10,19 +10,14 @@
     onchange="doReloadTable()"
   />
   <input
-    id="txtFilterEndIncomingDate"
-    name="txtFilterEndIncomingDate"
+    id="txtFilterEndOrderDate"
+    name="txtFilterEndOrderDate"
     type="date"
     maxlength="50"
     class="border p-2 rounded w-30 sm:mr-2 text-sm text-gray-500 form-input focus:border-gray-400 focus:outline-none focus:shadow-outline-gray"
     placeholder="Type here"
     onchange="doReloadTable()"
   />
-</div>
-<div class="relative text-gray-600 w-52 mb-6 float-left mt-4">
-  <input id="imeiInput"
-   placeholder="Loading..."
-   class=" imeiSelClass bg-white h-10 px-5 rounded-lg w-30 text-sm focus:outline-none border filter grayscale blur-md contrast-200">
 </div>
 <div class="txtSearch_tblreports_class relative text-gray-600 w-52 mb-6 float-left mr-5 mt-4">
   <input
@@ -56,19 +51,11 @@
 <table id="tblreports" class="w-full whitespace-nowrap">
   <thead>
     <tr class="font-semibold tracking-wide text-left text-gray-500 bg-gray-100 uppercase border-b">
-      <th class="px-4 py-3">Incoming Date</th>
-      <th class="px-4 py-3">Distributor</th>
-      <th class="px-4 py-3">Depo</th>
-      <th class="px-4 py-3">SKU</th>
-      <th class="px-4 py-3">IMEI</th>
       <th class="px-4 py-3">Product Name</th>
-      <th class="px-4 py-3">Description</th>
-      <th class="px-4 py-3">Color</th>
-      <th class="px-4 py-3">Capacity</th>
-      <th class="px-4 py-3 text-right">Quantity</th>
-      <th class="px-4 py-3 text-right">Price (RRP)</th>
-      <th class="px-4 py-3 text-right">Price Type</th>
-      <th class="px-4 py-3">Segment</th>
+      <th class="px-4 py-3">Amount</th>
+      <th class="px-4 py-3">Status</th>
+      <th class="px-4 py-3">Source</th>
+      <th class="px-4 py-3">Incoming Date</th>
     </tr>
   </thead>
 </table>
@@ -76,6 +63,7 @@
 <style>
 .ui-autocomplete {
     position: absolute;
+    max-height: 100px;
     top: 100%;
     left: 0;
     z-index: 1000;
@@ -101,6 +89,8 @@
     background-clip: padding-box;
     *border-right-width: 2px;
     *border-bottom-width: 2px;
+    overflow-y: auto;
+     overflow-x: hidden;
 }
 
 .ui-menu-item > a.ui-corner-all {
@@ -131,108 +121,103 @@
 .ui-autocomplete.ui-widget {
   font-size: 0.875rem;
   line-height: 1.25rem;
-  text-align: center;
+  text-align: left;
 }
 
 .ui-helper-hidden-accessible { display:none; }
 
 </style>
+
 <script>
   Pace.restart();
   $('#tblreports').hide();
   $('.txtSearch_tblreports_class').hide();
-  fetchIMEI();
-  $('.imeiSelClass').prop("disabled",true);
 
   function initDataTable() {
-    $('#tblreports').DataTable().clear();
-    $('#tblreports').DataTable().destroy();
-    $('#tblreports').DataTable( {
-    ajax: {
-      url: apiUrl+'/reports/getStockOnHand',
-      data: function(d) {
-        d.imei = $('#imeiInput').val();
-        d.startIncomingDate = $('#txtFilterStartIncomingDate').val();
-        d.endIncomingDate = $('#txtFilterEndIncomingDate').val();
-        d._s = getCookie(MSG['cookiePrefix']+'AUTH-TOKEN');
+      $('#tblreports').DataTable().clear();
+      $('#tblreports').DataTable().destroy();
+      $('#tblreports').DataTable( {
+        ajax: {
+          url: apiUrl+'/reports/getStock',
+          data: function(d) {
+            d.productName = $('#txtFrmName').val();
+            d.startIncomingDate = $('#txtFilterStartOrderDate').val();
+            d.endIncomingDate = $('#txtFilterEndOrderDate').val();
+            d._s = getCookie(MSG['cookiePrefix']+'AUTH-TOKEN');
       },
-    },
-    "paging": false,
-    "ordering": false,
-    columns: [
-      { data:'IncomingDate', className:'px-4 py-3 text-sm' },
-      { data:'Distributor', className:'px-4 py-3 text-sm' },
-      { data:'Depo', className:'px-4 py-3 text-sm' },
-      { data:'SKU', className:'px-4 py-3 text-sm' },
-      { data:'IMEI', className:'px-4 py-3 text-sm' },
-      { data:'Product', className:'px-4 py-3 text-sm' },
-      { data:'Description', className:'px-4 py-3 text-sm' },
-      { data:'Color', className:'px-4 py-3 text-sm' },
-      { data:'Capacity', className:'px-4 py-3 text-sm' },
-      { data:'Total', className:'px-4 py-3 text-sm text-right' },
-      { 
-        data:'UnitPrice', 
-        className:'px-4 py-3 text-sm text-right',
-        render: function (data, type, full, meta) {
-          var html = doFormatNumber(data);
-          return html
         },
-      },
-        { data:'PriceTypeDesc', className:'px-4 py-3 text-sm text-right' },
-      { 
-        data:'InPrice',
-        className:'px-4 py-3 text-sm',
-        render: function (data, type, full, meta) {
-          data = parseInt(data);
-          //console.log(data);
-          var html = 'PREMIUM';
-          if (data < 9000000) html = 'HIGH';
-          if (data < 6000000) html = 'MID';
-          if (data < 4500000) html = 'MASS';
-          if (data < 3000000) html = 'ENTRY';
-          if (data < 1500000) html = 'ULC';
-          return html
-        },
-      },
-    ],
-    'dom': '<"w-full overflow-x-auto rounded-lg"t<"grid px-4 py-3 text-xs tracking-wide text-gray-500 border-t bg-gray-50 sm:grid-cols-9"<"flex items-center col-span-3"i><"col-span-2"><"flex col-span-4 mt-2 sm:mt-auto sm:justify-end"<"inline-flex items-center"p>>>>'
-  });
-    $('.txtSearch_tblreports_class').show();
-  }
+        "paging": false,
+        "ordering": false,
+        columns: [
+          { data:'ProductName', className:'px-4 py-3 text-sm' },
+          { data:'Amount', className:'px-4 py-3 text-sm' },
+          {
+            data:'Status',
+            className:'px-4 py-3 text-sm',
+            render: function (data, type, full, meta) {
+              var html = data==1 ? '<span class="px-2 py-1 font-semibold leading-tight text-green-700 bg-green-100 rounded-full">Display</span>' : '<span class="px-2 py-1 font-semibold leading-tight text-white bg-red-400 rounded-full">On Storage</span>';
+              return html
+            },
+          },
+          { data:'Source', className:'px-4 py-3 text-sm' },
+          { data:'IncomingDate', className:'px-4 py-3 text-sm' }
+        ],
+        'dom': '<"w-full overflow-x-auto rounded-lg"t<"grid px-4 py-3 text-xs tracking-wide text-gray-500 border-t bg-gray-50 sm:grid-cols-9"<"flex items-center col-span-3"i><"col-span-2"><"flex col-span-4 mt-2 sm:mt-auto sm:justify-end"<"inline-flex items-center"p>>>>'
+      });
+       $('.txtSearch_tblreports_class').show();
+      }
 
   function doSearchTable() {
     $('#tblreports').DataTable().search( $('#txtSearch_tblreports').val() ).draw();
   }
 
-  function fetchIMEI() {
-    doFetch('global/getIMEI','_cb=onCompleteFetchIMEI&type=StockOnHand&_p=',false);
+  var delay = (function(){
+  var timer = 0;
+  return function(callback, ms){
+  clearTimeout (timer);
+  timer = setTimeout(callback, ms);
+ };
+})();
+
+  $('#txtFrmName').keyup(function() {
+    $('#txtFrmProductID').val('');
+    delay(function(){
+        var value = $('#txtFrmName').val();
+        fetchProductInfo();
+    }, 1000 );
+  });
+
+ function fetchProductInfo() {
+    var value = $('#txtFrmName').val();
+    if (value) {
+        doFetch('products/doLookup','_i='+value+'&_cb=onCompleteFetchProductInfo',loading=false);
+    }
   }
 
-  function onCompleteFetchIMEI(data) {
-    var html = '';
-    var imeiArr = [];
+  function onCompleteFetchProductInfo(data) {
+    Swal.close();
+    var ProductArr = [];
     for (i=0;i<data.length;i++) {
-      imeiArr.push(data[i].IMEI);
+      var formatData = data[i].Name + ' ' + data[i].Description + ' ['+ data[i].ID + ']';
+      ProductArr.push(formatData);
     }
-
-    $('.imeiSelClass').attr('placeholder', 'Search IMEI')
-    $('.imeiSelClass').prop("disabled",false);
-
-    $( "#imeiInput" ).autocomplete({
-      minLength: 3,
+    $( '#txtFrmName' ).autocomplete({
+      minLength: 0,
+      autoFocus: true,
       source: function (request, response) {
-        var results = $.ui.autocomplete.filter(imeiArr, request.term);
-        response(results.slice(0, 10));
+        var results = $.ui.autocomplete.filter(ProductArr, request.term);
+        response(results);
+      },
+      select : function(event, ui) {
+        var ProductID = ui.item.label.substring(
+            ui.item.label.lastIndexOf("[") + 1,
+            ui.item.label.lastIndexOf("]")
+        );
+        $('#txtFrmProductID').val(ProductID);
       }
     });
+    $('#txtFrmName').autocomplete("search", $('#txtFrmName').val());
     }
-
-    $('.imeiSelClass').keypress(function(event){
-        var keycode = (event.keyCode ? event.keyCode : event.which);
-        if(keycode == '13'){
-            doReloadTable();
-        }
-    });
 
   function doReloadTable() {
      initDataTable();
@@ -241,14 +226,13 @@
 
   function ShowAllData() {
      $('#imeiInput').val("");
-     $('#txtFilterStartIncomingDate').val("");
-     $('#txtFilterEndIncomingDate').val("");
+     $('#txtFilterStartOrderDate').val("");
+     $('#txtFilterEndOrderDate').val("");
      $('#tblreports').show();
      initDataTable();
     }
 
   function downloadExcel() {
-    window.location=apiUrl+'/reports/getStockOnHand?_export=true&' + 'imei=' + $('#imeiInput').val() + '&startIncomingDate='+$('#txtFilterStartIncomingDate').val() + '&endIncomingDate='+$('#txtFilterEndIncomingDate').val() + '&_s='+getCookie(MSG['cookiePrefix']+'AUTH-TOKEN');
-
+    window.location=apiUrl+'/reports/getStock?_export=true&' + 'imei=' + $('#txtFrmName').val() + '&startIncomingDate='+$('#txtFilterStartOrderDate').val() + '&endIncomingDate='+$('#txtFilterEndOrderDate').val() + '&_s='+getCookie(MSG['cookiePrefix']+'AUTH-TOKEN');
   }
 </script>

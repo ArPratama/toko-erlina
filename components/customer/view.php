@@ -12,6 +12,11 @@
       <span id="lblFrmLastPurchase" class="block"></span>
     </label>
 
+    <label class="block mt-4">
+      <span class="block text-gray-500">Purchase Amount:</span>
+      <span id="lblFrmPurchaseAmount" class="block"></span>
+    </label>
+
     <div class="block mt-4">
       <span class="block text-gray-500">Status:</span>
       <span id="lblFrmStatus" class="block"></span>
@@ -36,6 +41,7 @@
     var status = html = data.Status==1 ? '<span class="px-2 py-1 font-semibold leading-tight text-green-700 bg-green-100 rounded-full">Active</span>' : '<span class="px-2 py-1 font-semibold leading-tight text-white bg-red-400 rounded-full">Inactive</span>';
     $('#lblFrmName').html(data.Name);
     $('#lblFrmLastPurchase').html(data.LastPurchase);
+    $('#lblFrmPurchaseAmount').html(data.PurchaseAmount);
     $('#lblFrmStatus').html(status);
   }
 </script>

@@ -34,27 +34,20 @@
 </form>
 
 <script>
-  function fetchStatus(ID='') {
-    doFetch('global/getStockStatus','_cb=onCompleteFetchStatus&_p='+ID);
-  }
-  function onCompleteFetchStatus(data,ID) {
-    Swal.close();
+  function fetchStatus(currentStatus) {
     var html = '';
     html += '<option value="">Please Select</option>';
-    for (i=0;i<data.length;i++) {
-      var statusName = "On Storage"
-      if (data[i].Status == 1) {
-        var statusName = "Display"
-      }
-      html += '<option value="'+data[i].Status+'">'+statusName+'</option>';
+    if(currentStatus == 1){
+        html += '<option value="2">On Storage</option>';
+    } else {
+        html += '<option value="1">Display</option>';
     }
     $('#selFrmStatus').html(html);
-    if (ID!='') { $('#selFrmStatus').val(ID); }
   }
 
-  function onDetailForm(count,data) {
+  function onDetailForm(count,data,currentStatus) {
     $('#lblFrmItems').html(count + ' item'+(count==1 ? '' : 's')+' will be updated to');
     $('#hdnFrmID').val(data);
-    fetchStatus();
+    fetchStatus(currentStatus);
   }
 </script>

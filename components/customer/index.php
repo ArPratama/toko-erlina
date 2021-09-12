@@ -67,6 +67,18 @@
         />
       </th>
       <th class="px-4 py-3">
+        Purchase Amount<br />
+        <input
+          id="txtFilterPurchaseAmount"
+          name="txtFilterPurchaseAmount"
+          type="text"
+          class="border p-2 rounded w-full mt-1 text-sm form-input focus:border-gray-400 focus:outline-none focus:shadow-outline-gray"
+          placeholder="Type here"
+          onkeyup="doSearchTableColumn(2,$('#txtFilterPurchaseAmount').val())"
+          disabled
+        />
+      </th>
+      <th class="px-4 py-3">
         Status<br />
         <input
           id="txtFilterStatus"
@@ -108,6 +120,7 @@
     columns: [
       { data:'Name', className:'px-4 py-3 text-sm' },
       { data:'LastPurchase', className:'px-4 py-3 text-sm' },
+      { data:'PurchaseAmount', className:'px-4 py-3 text-sm' },
       {
         data:'Status',
         className:'px-4 py-3 text-sm',

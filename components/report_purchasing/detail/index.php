@@ -25,24 +25,6 @@
   </button>
 </div>
 
-<button
-  id="btnFrmAdd"
-  onclick="loadModal('transaction/detail/add','fetchProduct()')"
-  class="w-32 mt-6 float-right px-4 py-2 text-sm text-white bg-blue-600 border border-transparent rounded-lg active:bg-blue-600 hover:bg-blue-700 focus:outline-none focus:shadow-outline-blue"
->
-  Add Item
-</button>
-
-<button
-  id="btnSendNotif"
-  onclick="doSendNotif()"
-  data-id=""
-  class="w-36 mt-6 mr-2 float-right px-4 py-2 text-sm text-white bg-blue-600 border border-transparent rounded-lg active:bg-blue-600 hover:bg-blue-700 focus:outline-none focus:shadow-outline-blue"
-  style="display:none"
->
-  Request Approval
-</button>
-
 <table id="tbltransaction" class="w-full whitespace-nowrap">
   <thead>
     <tr class="font-semibold tracking-wide text-left text-gray-500 bg-gray-100 uppercase border-b">
@@ -51,7 +33,6 @@
       <th class="px-4 py-3">Amount</th>
       <th class="px-4 py-3">Total</th>
       <th class="px-4 py-3">Status</th>
-      <th class="px-4 py-3">&nbsp;</th>
     </tr>
   </thead>
 </table>
@@ -62,12 +43,12 @@
     modal.close();
     var html = $('#lblBreadcrumb').html();
     if (!isReload) {
-      html += ' / <a href="#" onclick="loadPage(\'transaction/detail/index\',\'onDetailForm(`'+ID+'`,true)\')">Detail</a>';
+      html += ' / <a href="#" onclick="loadPage(\'report_purchasing/detail/index\',\'onDetailForm(`'+ID+'`,true)\')">Detail</a>';
     }
     $('#lblBreadcrumb').html(html);
     $('#hdnFrmParentID').val(ID);
     doFetch('transaction/get','_i='+ID);
-
+    
     $('#tbltransaction').DataTable( {
       ajax: {
         url: apiUrl+'/transaction/detail/get?_i='+ID+'&_s='+getCookie(MSG['cookiePrefix']+'AUTH-TOKEN'),
@@ -92,21 +73,7 @@
             return html
           },
         },
-        { data:'Status', className:'px-4 py-3 text-sm' },
-        {
-          data:'ID',
-          render: function (data, type, full, meta) {
-            var html = '';
-          html = '<div class="flex item-center justify-center">' +
-                    '<div onclick="showDeleteConfirm(\''+full['ID']+'\',\''+full['ProductName']+'\')" class="w-4 mr-2 transform hover:text-blue-500 hover:scale-110 cursor-pointer">' +
-                        '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">' +
-                          '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />' +
-                        '</svg>' +
-                      '</div>' +
-                  '</div>';
-            return html
-          },
-        },
+        { data:'Status', className:'px-4 py-3 text-sm' }
       ],
       'dom': '<"w-full overflow-x-auto rounded-lg"t<"grid px-4 py-3 text-xs tracking-wide text-gray-500 border-t bg-gray-50 sm:grid-cols-9"<"flex items-center col-span-3"i><"col-span-2"><"flex col-span-4 mt-2 sm:mt-auto sm:justify-end"<"inline-flex items-center"p>>>>'
     });

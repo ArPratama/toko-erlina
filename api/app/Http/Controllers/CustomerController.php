@@ -50,7 +50,7 @@ class CustomerController extends Controller
         $return = array('status'=>true,'message'=>"",'data'=>array(),'callback'=>"");
         $getAuth = $this->validateAuth($request->_s);
         if ($getAuth['status']) {
-            $mainQuery = "SELECT ID, Name, LastPurchase, CreatedDate, CreatedBy, ModifiedDate, ModifiedBy, Status
+            $mainQuery = "SELECT ID, Name, LastPurchase, CreatedDate, CreatedBy, ModifiedDate, ModifiedBy, Status, PurchaseAmount
                             FROM ms_customer
                             WHERE {definedFilter}
                             ORDER BY CreatedDate DESC
@@ -111,6 +111,7 @@ class CustomerController extends Controller
                 "CUSTOMER ID",
                 "NAME",
                 "LAST PURCHASE",
+                "PURCHASE AMOUNT",
                 "CREATED DATE",
                 "CREATED BY",
                 "STATUS"
@@ -121,6 +122,7 @@ class CustomerController extends Controller
                     $value->ID,
                     $value->Name,
                     $value->LastPurchase,
+                    $value->PurchaseAmount,
                     $value->CreatedDate,
                     $value->CreatedBy,
                     $value->Status==1 ? "ACTIVE" : "INACTIVE"

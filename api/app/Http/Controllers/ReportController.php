@@ -18,8 +18,8 @@ class ReportController extends Controller
     public function __construct() {}
 
     private function validateAuth($Token) {
-        $return = array('status'=>false,'UserID'=>"",'DistributorID'=>"");
-        $query = "SELECT u.ID, u.DistributorID, u.AccountType
+        $return = array('status'=>false,'UserID'=>"");
+        $query = "SELECT u.ID, u.AccountType
                     FROM MS_USER u
                         JOIN TR_SESSION s ON s.UserID = u.ID
                     WHERE s.Token=?
@@ -27,13 +27,12 @@ class ReportController extends Controller
         $checkAuth = DB::select($query,[$Token]);
         if ($checkAuth) {
             $data = $checkAuth[0];
-            $query = "UPDATE TR_SESSION SET LastActive=GETDATE() WHERE Token=?";
+            $query = "UPDATE TR_SESSION SET LastActive=NOW() WHERE Token=?";
             DB::update($query,[$Token]);
             $return = array(
                 'status' => true,
                 'UserID' => $data->ID,
-                'AccountType' => $data->AccountType,
-                'DistributorID' => $data->DistributorID
+                'AccountType' => $data->AccountType
             );
         }
         return $return;
@@ -45,106 +44,52 @@ class ReportController extends Controller
         $return = array('status'=>true,'message'=>"",'data'=>array(),'callback'=>"");
         $getAuth = $this->validateAuth($request->_s);
         if ($getAuth['status']) {
-            $mainQuery = "SELECT i.DistributorID,
-                            i.IncomingDate,
-                            d.Name Distributor,
-                            i.DepoID,
-                            de.Name Depo,
-                            p.SKU,
-                            i.IMEI,
-                            p.Name Product,
-                            p.Description,
-                            p.Color,
-                            p.Capacity,
-                            COUNT(p.SKU) Total,
-                            CASE
-                                WHEN r1.Field1 = 'PRICECAT1' THEN p.UnitPrice
-                                WHEN r1.Field1 = 'PRICECAT2' THEN p.UnitPriceAFP
-                                WHEN r1.Field1 = 'PRICECAT3' THEN p.UnitPriceFTZ
-                            END UnitPrice,
-                            de.PriceType,
-                            r1.Field2 PriceTypeDesc,
-                            CASE
-                                WHEN r1.Field1 = 'PRICECAT1' THEN p.InPrice
-                                WHEN r1.Field1 = 'PRICECAT2' THEN p.InPriceAFP
-                                WHEN r1.Field1 = 'PRICECAT3' THEN p.InPriceFTZ
-                            END InPrice
-                        FROM MS_INVENTORY i
-                            JOIN MS_PRODUCT p ON p.ID=i.ProductID
-                            LEFT JOIN MS_DISTRIBUTOR d ON d.ID=i.DistributorID
-                            LEFT JOIN MS_DEPO de ON de.ID=i.DepoID
-                            LEFT JOIN MS_REFERENCES r1 ON r1.ID = de.PriceType
+            $mainQuery = "SELECT s.ID,
+                            s.ProductID,
+                            s.CreatedDate,
+                            s.Amount,
+                            s.Status,
+                            s.Source,
+                            s.IncomingDate,
+                            p.Name ProductName
+                        FROM ms_stock s
+                        JOIN ms_product p ON p.ID = s.ProductID
                         WHERE {definedFilter}
-                        GROUP BY i.DistributorID,i.IncomingDate,d.Name,i.DepoID,i.IMEI,de.Name,p.SKU,p.Name,p.Description,p.Color,p.Capacity,p.UnitPrice,p.UnitPriceAFP,p.UnitPriceFTZ, de.PriceType, r1.Field2, r1.Field1, p.InPrice, p.InPriceAFP, p.InPriceFTZ
-                        ORDER BY Total DESC";
-            $definedFilter = "i.Status IN ('1','2','3')";
-            if ($request->imei) $definedFilter .= " AND i.IMEI=? ";
-            if ($request->startIncomingDate) $definedFilter.= " AND i.IncomingDate > '".$request->startIncomingDate."'";
-            if ($request->endIncomingDate) $definedFilter.= " AND DATEADD(day, -1, i.IncomingDate) <= '".$request->endIncomingDate."'";
-            if ($getAuth['AccountType']==1) {
-                $query = str_replace("{definedFilter}",$definedFilter,$mainQuery);
-                if ($request->imei) {
-                $data = DB::select($query, [$request->imei]);
-                } else {
-                $data = DB::select($query);
-                }
+                        ORDER BY IncomingDate DESC";
+            $definedFilter = "s.Status IN ('1','2','3')";
+            if ($request->productID) $definedFilter .= " AND s.ProductID=? ";
+            if ($request->startIncomingDate) $definedFilter.= " AND s.IncomingDate >= '".$request->startIncomingDate."'";
+            if ($request->endIncomingDate) $definedFilter.= " AND DATE_ADD(s.IncomingDate, INTERVAL -1 DAY) < '".$request->endIncomingDate."'";
+            $query = str_replace("{definedFilter}",$definedFilter,$mainQuery);
+            if ($request->productID) {
+                $data = DB::select($query, [$request->productID]);
             } else {
-                $definedFilter .= " AND i.DistributorID=? ";
-                $query = str_replace("{definedFilter}",$definedFilter,$mainQuery);
-                if ($request->imei) {
-                $data = DB::select($query,[$request->imei, $getAuth['DistributorID']]);
-                } else {
-                $data = DB::select($query,[$getAuth['DistributorID']]);
-                }
+                $data = DB::select($query);
             }
             if ($data) $return['data'] = $data;
         } else $return = array('status'=>false,'message'=>"Not Authorized");
         if (!$request->_export) {
             return response()->json($return, 200);
         } else {
-            $filename = 'Stock_on_Hand';
+            $filename = 'Stock_Reporting';
             $arrData = [];
             $arrHeader = array(
                 "INCOMING DATE",
-                "DISTRIBUTOR ID",
-                "DISTRIBUTOR",
-                "DEPO ID",
-                "DEPO",
-                "SKU",
-                "IMEI",
                 "PRODUCT NAME",
-                "DESCRIPTION",
-                "COLOR",
-                "CAPACITY",
-                "QUANTITY",
-                "PRICE (RRP)",
-                "PRICE TYPE",
-                "SEGMENT"
+                "AMOUNT",
+                "STATUS",
+                "SOURCE",
             );
             array_push($arrData,$arrHeader);
             foreach ($return['data'] as $key => $value) {
-                $segment = 'PREMIUM';
-                if ($value->InPrice < 9000000) $segment = 'HIGH';
-                if ($value->InPrice < 6000000) $segment = 'MID';
-                if ($value->InPrice < 4500000) $segment = 'MASS';
-                if ($value->InPrice < 3000000) $segment = 'ENTRY';
-                if ($value->InPrice < 1500000) $segment = 'ULC';
+                $status = 'On Display';
+                if ($value->Status == 2) $status = 'On Storage';
                 $rows = array(
                     $value->IncomingDate,
-                    $value->DistributorID,
-                    $value->Distributor,
-                    $value->DepoID,
-                    $value->Depo,
-                    $value->SKU,
-                    $value->IMEI,
-                    $value->Product,
-                    $value->Description,
-                    $value->Color,
-                    $value->Capacity,
-                    $value->Total,
-                    $value->UnitPrice,
-                    $value->PriceTypeDesc,
-                    $segment
+                    $value->ProductName,
+                    $value->Amount,
+                    $status,
+                    $value->Source
                 );
                 array_push($arrData,$rows);
             }
@@ -154,74 +99,60 @@ class ReportController extends Controller
 
     public function getPurchasing(Request $request)
     {
+        ini_set('memory_limit', '-1');
         $return = array('status'=>true,'message'=>"",'data'=>array(),'callback'=>"");
         $getAuth = $this->validateAuth($request->_s);
         if ($getAuth['status']) {
-            $mainQuery = "SELECT p.SKU,
-                            i.IMEI,
-                            p.Name Product,
-                            p.Description,
-                            p.Color,
-                            p.Capacity,
-                            COUNT(p.SKU) Total,
-                            MAX(i.BookedDate) LastBook
-                        FROM MS_INVENTORY i
-                            JOIN MS_PRODUCT p ON p.ID=i.ProductID
-                        WHERE {definedFilter}
-                        GROUP BY p.SKU,p.Name,p.Description,p.Color,p.Capacity,i.IMEI
-                        {havingFilter}
-                        ORDER BY Total DESC";
-            $definedFilter = "i.DeliveryOrderID != ''";
-            $havingFilter = "";
-            if ($request->imei) $definedFilter .= " AND i.IMEI=? ";
-            if ($request->startOrderDate || $request->endOrderDate) $havingFilter .= "HAVING MAX(i.BookedDate) != ''";
-            if ($request->startOrderDate) $havingFilter.= " AND MAX(i.BookedDate) > '".$request->startOrderDate."'";
-            if ($request->endOrderDate) $havingFilter.= " AND DATEADD(day, -1, MAX(i.BookedDate)) <= '".$request->endOrderDate."'";
-            $mainQuery = str_replace("{havingFilter}",$havingFilter,$mainQuery);
-            if ($getAuth['AccountType']==1) {
-                $query = str_replace("{definedFilter}",$definedFilter,$mainQuery);
-                if ($request->imei) {
-                $data = DB::select($query, [$request->imei]);
-                } else {
-                $data = DB::select($query);
-                }
-            } else {
-                $definedFilter .= " AND i.DistributorID=? ";
-                $query = str_replace("{definedFilter}",$definedFilter,$mainQuery);
-                if ($request->imei) {
-                $data = DB::select($query,[$request->imei, $getAuth['DistributorID']]);
-                } else {
-                $data = DB::select($query,[$getAuth['DistributorID']]);
-                }
-            }
+            $mainQuery = "SELECT t.ID,
+                t.TransactionDate,
+                t.Status,
+                cs.Name CustomerName,
+                t.Description,
+                SUM(td.Amount) TotalItem,
+                SUM(td.Price * td.Amount) TotalPrice
+                FROM tr_transaction t
+                LEFT JOIN ms_customer cs ON cs.ID = t.CustomerID
+                LEFT JOIN tr_transaction_detail td ON td.TransactionID =  t.ID
+                WHERE {definedFilter}
+                GROUP BY t.ID,
+                t.TransactionDate,
+                t.Status,
+                cs.Name,
+                t.Description
+                ORDER BY t.TransactionDate DESC";
+            $definedFilter = "t.Status IN ('1','2','3')";
+            if ($request->startTransactionDate) $definedFilter.= " AND t.TransactionDate >= '".$request->startTransactionDate."'";
+            if ($request->endTransactionDate) $definedFilter.= " AND DATE_ADD(t.TransactionDate, INTERVAL -1 DAY) < '".$request->endTransactionDate."'";
+
+            $query = str_replace("{definedFilter}",$definedFilter,$mainQuery);
+            $data = DB::select($query);
+
             if ($data) $return['data'] = $data;
         } else $return = array('status'=>false,'message'=>"Not Authorized");
         if (!$request->_export) {
             return response()->json($return, 200);
         } else {
-            $filename = 'Sales_by_Model';
+            $filename = 'Transaction_Reporting';
             $arrData = [];
             $arrHeader = array(
-                "SKU",
-                "IMEI",
-                "PRODUCT NAME",
+                "TRANSACTION DATE",
+                "STATUS",
+                "CUSTOMER NAME",
                 "DESCRIPTION",
-                "COLOR",
-                "CAPACITY",
-                "ITEM SOLD",
-                "LAST ORDER"
+                "TOTAL ITEM",
+                "TOTAL PRICE"
             );
             array_push($arrData,$arrHeader);
             foreach ($return['data'] as $key => $value) {
+                $status = 'Active';
+                if ($value->Status == 2) $status = 'Inactive';
                 $rows = array(
-                    $value->SKU,
-                    $value->IMEI,
-                    $value->Product,
+                    $value->TransactionDate,
+                    $status,
+                    $value->CustomerName,
                     $value->Description,
-                    $value->Color,
-                    $value->Capacity,
-                    $value->Total,
-                    $value->LastBook
+                    $value->TotalItem,
+                    $value->TotalPrice
                 );
                 array_push($arrData,$rows);
             }
