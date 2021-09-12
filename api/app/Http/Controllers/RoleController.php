@@ -17,14 +17,14 @@ class RoleController extends Controller
     private function validateAuth($Token) {
         $return = array('status'=>false,'UserID'=>"");
         $query = "SELECT u.ID,u.AccountType
-                    FROM MS_USER u
-                        JOIN TR_SESSION s ON s.UserID = u.ID
+                    FROM ms_user u
+                        JOIN tr_session s ON s.UserID = u.ID
                     WHERE s.Token=?
                         AND s.LogoutDate IS NULL";
         $checkAuth = DB::select($query,[$Token]);
         if ($checkAuth) {
             $data = $checkAuth[0];
-            $query = "UPDATE TR_SESSION SET LastActive=NOW() WHERE Token=?";
+            $query = "UPDATE tr_session SET LastActive=NOW() WHERE Token=?";
             DB::update($query,[$Token]);
             $return = array(
                 'status' => true,
@@ -41,7 +41,7 @@ class RoleController extends Controller
         $getAuth = $this->validateAuth($request->_s);
         if ($getAuth['status']) {
             $mainQuery = "SELECT ID,Name,Status,CreatedDate
-                            FROM MS_ROLE
+                            FROM ms_role
                             WHERE {definedFilter}
                             ORDER BY CreatedDate DESC";
             $definedFilter = "ID!='SYSTEM'";
@@ -66,7 +66,7 @@ class RoleController extends Controller
     {
         $return = array('status'=>true,'message'=>"",'data'=>null,'callback'=>"");
         if ($request->_i) {
-            $query = "SELECT MenuID FROM MS_ROLE_ACCESS WHERE RoleID = ?";
+            $query = "SELECT MenuID FROM ms_role_ACCESS WHERE RoleID = ?";
             $data = DB::select($query,[$request->_i]);
             if ($data) {
                 $return['data'] = $data;
@@ -83,7 +83,7 @@ class RoleController extends Controller
         if ($getAuth['status']) {
             $isProcess = false;
             $i = 0;
-            $query = "SELECT ID FROM MS_MENU WHERE Status=1";
+            $query = "SELECT ID FROM ms_menu WHERE Status=1";
             $arrMenu = DB::select($query);
             foreach ($arrMenu as $key => $value) {
                 if(isset($_POST['chkFrmMenu_'.$value->ID])) $i++;
@@ -92,7 +92,7 @@ class RoleController extends Controller
                 if ($request->hdnFrmAction=="add") {
                     $data = DB::select("SELECT UUID() ID");
                     $ID = $data[0]->ID;
-                    $query = "INSERT INTO MS_ROLE
+                    $query = "INSERT INTO ms_role
                             (ID, Name, Status, CreatedDate, CreatedBy, ModifiedDate, ModifiedBy)
                             VALUES(?, ?, ?, NOW(), ?, NULL, NULL)";
                     DB::insert($query, [
@@ -108,7 +108,7 @@ class RoleController extends Controller
                 if ($request->hdnFrmAction=="edit") {
                     $ID = $request->hdnFrmID;
                     if ($request->hdnFrmID!="SYSTEM") {
-                        $query = "UPDATE MS_ROLE
+                        $query = "UPDATE ms_role
                                 SET Name=?,
                                 Status=?,
                                 ModifiedDate=NOW(),
@@ -129,11 +129,11 @@ class RoleController extends Controller
                     }
                 }
                 if ($isProcess) {
-                    $query = "DELETE FROM MS_ROLE_ACCESS WHERE RoleID = ?";
+                    $query = "DELETE FROM ms_role_ACCESS WHERE RoleID = ?";
                     DB::delete($query, [$request->hdnFrmID]);
                     foreach ($arrMenu as $key => $value) {
                         if(isset($_POST['chkFrmMenu_'.$value->ID])) {
-                            $query = "INSERT INTO MS_ROLE_ACCESS
+                            $query = "INSERT INTO ms_role_ACCESS
                                         (ID, RoleID, MenuID)
                                     VALUES(UUID(), ?, ?)";
                             DB::insert($query, [$ID,$value->ID,]);
@@ -154,9 +154,9 @@ class RoleController extends Controller
         $getAuth = $this->validateAuth($request->_s);
         if ($getAuth['status']) {
             if ($request->_i!="SYSTEM") {
-                $query = "DELETE FROM MS_ROLE WHERE ID = ?";
+                $query = "DELETE FROM ms_role WHERE ID = ?";
                 DB::delete($query, [$request->_i]);
-                $query = "DELETE FROM MS_ROLE_ACCESS WHERE RoleID = ?";
+                $query = "DELETE FROM ms_role_ACCESS WHERE RoleID = ?";
                 DB::delete($query, [$request->_i]);
                 $return['message'] = "Data has been removed!";
                 $return['callback'] = "doReloadTable()";

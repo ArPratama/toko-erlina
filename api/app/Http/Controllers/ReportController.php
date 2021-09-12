@@ -20,14 +20,14 @@ class ReportController extends Controller
     private function validateAuth($Token) {
         $return = array('status'=>false,'UserID'=>"");
         $query = "SELECT u.ID, u.AccountType
-                    FROM MS_USER u
-                        JOIN TR_SESSION s ON s.UserID = u.ID
+                    FROM ms_user u
+                        JOIN tr_session s ON s.UserID = u.ID
                     WHERE s.Token=?
                         AND s.LogoutDate IS NULL";
         $checkAuth = DB::select($query,[$Token]);
         if ($checkAuth) {
             $data = $checkAuth[0];
-            $query = "UPDATE TR_SESSION SET LastActive=NOW() WHERE Token=?";
+            $query = "UPDATE tr_session SET LastActive=NOW() WHERE Token=?";
             DB::update($query,[$Token]);
             $return = array(
                 'status' => true,

@@ -46,14 +46,14 @@ class UserController extends Controller
     private function validateAuth($Token) {
         $return = array('status'=>false,'UserID'=>"");
         $query = "SELECT u.ID, u.AccountType
-                    FROM MS_USER u
-                        JOIN TR_SESSION s ON s.UserID = u.ID
+                    FROM ms_user u
+                        JOIN tr_session s ON s.UserID = u.ID
                     WHERE s.Token=?
                         AND s.LogoutDate IS NULL";
         $checkAuth = DB::select($query,[$Token]);
         if ($checkAuth) {
             $data = $checkAuth[0];
-            $query = "UPDATE TR_SESSION SET LastActive=NOW() WHERE Token=?";
+            $query = "UPDATE tr_session SET LastActive=NOW() WHERE Token=?";
             DB::update($query,[$Token]);
             $return = array(
                 'status' => true,
@@ -78,9 +78,9 @@ class UserController extends Controller
                                 u.ContactNumber,
                                 u.Status,
                                 u.CreatedDate,
-                                (SELECT MAX(LastActive) FROM TR_SESSION s WHERE s.UserID=u.ID) LastActive
-                            FROM MS_USER u
-                                JOIN MS_ROLE r ON r.ID = u.RoleID
+                                (SELECT MAX(LastActive) FROM tr_session s WHERE s.UserID=u.ID) LastActive
+                            FROM ms_user u
+                                JOIN ms_role r ON r.ID = u.RoleID
                             WHERE {definedFilter}
                             ORDER BY u.CreatedDate DESC";
             $definedFilter = "u.ID!='SYSTEM'";
@@ -114,12 +114,12 @@ class UserController extends Controller
         if ($getAuth['status']) {
             if ($request->hdnFrmAction=="add" && $getAuth['AccountType']==1) {
                 $isAuth = true;
-                $query = "SELECT ID FROM MS_USER WHERE UserName=?";
+                $query = "SELECT ID FROM ms_user WHERE UserName=?";
                 $isExist = DB::select($query, [$request->txtFrmEmail]);
                 if (!$isExist) {
                     $key = $this->randomString(10);
                     $encrypt = $this->strEncrypt($key,$request->txtFrmPassword);
-                    $query = "INSERT INTO MS_USER
+                    $query = "INSERT INTO ms_user
                         (ID, RoleID, UserName, FullName, Email, ContactNumber, AccountType,
                         Password, Salt, IVssl, Tagssl, Status, CreatedDate, CreatedBy, ModifiedDate, ModifiedBy)
                         VALUES
@@ -152,7 +152,7 @@ class UserController extends Controller
                         if (trim($request->txtFrmPassword)!="") {
                             $key = $this->randomString(10);
                             $encrypt = $this->strEncrypt($key,$request->txtFrmPassword);
-                            $query = "UPDATE MS_USER
+                            $query = "UPDATE ms_user
                                         SET RoleID=?,
                                             FullName=?,
                                             ContactNumber=?,
@@ -179,7 +179,7 @@ class UserController extends Controller
                                 $request->hdnFrmID
                             ]);
                         } else {
-                            $query = "UPDATE MS_USER
+                            $query = "UPDATE ms_user
                                         SET RoleID=?,
                                             FullName=?,
                                             ContactNumber=?,
@@ -220,7 +220,7 @@ class UserController extends Controller
                     $isAuth = true;
                 }
                 if ($isAuth) {
-                    $query = "DELETE FROM MS_USER WHERE ID=?";
+                    $query = "DELETE FROM ms_user WHERE ID=?";
                     DB::delete($query, [$request->_i]);
                     $return['message'] = "Data has been removed!";
                     $return['callback'] = "doReloadTable()";

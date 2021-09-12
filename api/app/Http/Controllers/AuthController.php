@@ -49,7 +49,7 @@ class AuthController extends Controller
         $return = array('status'=>false,'message'=>"",'data'=>null,'callback'=>"");
         $return['message'] = "Invalid Username or Password";
         $query = "SELECT ID,FullName,RoleID,Status,Password,Salt,IVssl,Tagssl
-                    FROM MS_USER
+                    FROM ms_user
                     WHERE UPPER(UserName) = UPPER(?)";
         $data = DB::select($query,[$request->txtEmail]);
         if ($data) {
@@ -59,7 +59,7 @@ class AuthController extends Controller
                 if ($decrypted == $request->txtPassword) {
                     $SessionID = base64_encode($this->randomString(64).base64_encode(md5($data->ID).time()));
                     $IP = getenv('REMOTE_ADDR');
-                    $query = "INSERT INTO TR_SESSION (ID, UserID, Token, LoginDate, LogoutDate, IPAddress, LastActive)
+                    $query = "INSERT INTO tr_session (ID, UserID, Token, LoginDate, LogoutDate, IPAddress, LastActive)
                                 VALUES (UUID(), ?, ?, NOW(), NULL, ?, NOW())";
                     DB::insert($query,[$data->ID,$SessionID,$IP]);
                     $return = array(
@@ -83,19 +83,19 @@ class AuthController extends Controller
     {
         $return = array('status'=>false,'message'=>"",'data'=>null,'callback'=>"");
         $query = "SELECT u.ID,u.FullName,u.AccountType
-                FROM TR_SESSION s
-                    JOIN MS_USER u ON u.ID = s.UserID
-                    JOIN MS_ROLE r ON r.ID = u.RoleID
+                FROM tr_session s
+                    JOIN ms_user u ON u.ID = s.UserID
+                    JOIN ms_role r ON r.ID = u.RoleID
                 WHERE s.Token = ?
                     AND s.LogoutDate IS NULL";
         $data = DB::select($query,[$request->_s]);
         if ($data) {
             $userData = $data[0];
             $query = "SELECT m.ID,m.Name,m.URL,m.Icon,m.ParentID
-                FROM TR_SESSION s
-                    JOIN MS_USER u ON u.ID = s.UserID
-                    JOIN MS_ROLE_ACCESS r ON r.RoleID = u.RoleID
-                    JOIN MS_MENU m ON m.ID = r.MenuID
+                FROM tr_session s
+                    JOIN ms_user u ON u.ID = s.UserID
+                    JOIN ms_role_access r ON r.RoleID = u.RoleID
+                    JOIN ms_menu m ON m.ID = r.MenuID
                 WHERE s.Token = ?
                     AND s.LogoutDate IS NULL
                 ORDER BY m.ParentID ASC, m.Sequence ASC";
@@ -117,7 +117,7 @@ class AuthController extends Controller
     public function doLogout(Request $request)
     {
         $return = array('status'=>false,'message'=>"",'data'=>null,'callback'=>"");
-        $query = "UPDATE TR_SESSION
+        $query = "UPDATE tr_session
                     SET LogoutDate = NOW()
                     WHERE Token = ?";
         DB::insert($query,[$request->Token]);
@@ -134,7 +134,7 @@ class AuthController extends Controller
         $return = array('status'=>false,'message'=>"",'data'=>null,'callback'=>"");
         $return['message'] = "User not found or inactive";
         $query = "SELECT ID,FullName,RoleID,Password,Salt,IVssl,Tagssl
-                    FROM MS_USER
+                    FROM ms_user
                     WHERE UPPER(UserName) = UPPER(?)
                             AND Status = 1";
         $data = DB::select($query,[$request->txtEmail]);

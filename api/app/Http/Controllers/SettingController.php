@@ -16,15 +16,15 @@ class SettingController extends Controller
 
     private function validateAuth($Token) {
         $return = array('status'=>false,'UserID'=>"",'DistributorID'=>"");
-        $query = "SELECT u.ID, u.DistributorID, u.AccountType 
-                    FROM MS_USER u
-                        JOIN TR_SESSION s ON s.UserID = u.ID 
+        $query = "SELECT u.ID, u.DistributorID, u.AccountType
+                    FROM ms_user u
+                        JOIN tr_session s ON s.UserID = u.ID
                     WHERE s.Token=?
                         AND s.LogoutDate IS NULL";
         $checkAuth = DB::select($query,[$Token]);
         if ($checkAuth) {
             $data = $checkAuth[0];
-            $query = "UPDATE TR_SESSION SET LastActive=GETDATE() WHERE Token=?";
+            $query = "UPDATE tr_session SET LastActive=GETDATE() WHERE Token=?";
             DB::update($query,[$Token]);
             $return = array(
                 'status' => true,
@@ -42,7 +42,7 @@ class SettingController extends Controller
         $getAuth = $this->validateAuth($request->_s);
         if ($getAuth['status']) {
             $mainQuery = "SELECT ID,Type,Field1,Field2,Field3,IsEditable
-                            FROM MS_REFERENCES
+                            FROM ms_references
                             WHERE {definedFilter}
                             ORDER BY Type ASC, Field1 ASC, Field2 ASC";
             $definedFilter = "1=1";
@@ -69,10 +69,10 @@ class SettingController extends Controller
         $getAuth = $this->validateAuth($request->_s);
         if ($getAuth['status']) {
             if ($request->hdnFrmAction=="add") {
-                $query = "SELECT ID FROM MS_REFERENCES WHERE Type=? AND Field1=?";
+                $query = "SELECT ID FROM ms_references WHERE Type=? AND Field1=?";
                 $isExist = DB::select($query, [$request->txtFrmType, $request->txtFrmField1]);
                 if (!$isExist) {
-                    $query = "INSERT INTO MS_REFERENCES
+                    $query = "INSERT INTO ms_references
                                     (ID, [Type], Field1, Field2, Field3, IsEditable, Status, CreatedDate, CreatedBy, ModifiedDate, ModifiedBy)
                                 VALUES(NEWID(), ?, ?, ?, ?, 1, 1, GETDATE(), ?, NULL, NULL)";
                     DB::insert($query, [
@@ -90,15 +90,15 @@ class SettingController extends Controller
                 }
             }
             if ($request->hdnFrmAction=="edit") {
-                $query = "SELECT ID FROM MS_REFERENCES WHERE Type=? AND Field1=? AND ID!=?";
+                $query = "SELECT ID FROM ms_references WHERE Type=? AND Field1=? AND ID!=?";
                 $isExist = DB::select($query, [$request->txtFrmType, $request->txtFrmField1, $request->hdnFrmID]);
                 if (!$isExist) {
-                    $query = "UPDATE MS_REFERENCES
-                                SET Type=?, 
-                                    Field1=?, 
-                                    Field2=?, 
-                                    Field3=?, 
-                                    ModifiedDate=GETDATE(), 
+                    $query = "UPDATE ms_references
+                                SET Type=?,
+                                    Field1=?,
+                                    Field2=?,
+                                    Field3=?,
+                                    ModifiedDate=GETDATE(),
                                     ModifiedBy=?
                                 WHERE ID=?";
                     DB::update($query, [
@@ -125,10 +125,10 @@ class SettingController extends Controller
         $return = array('status'=>true,'message'=>"",'data'=>null,'callback'=>"");
         $getAuth = $this->validateAuth($request->_s);
         if ($getAuth['status']) {
-            $query = "SELECT ID FROM MS_REFERENCES WHERE ID=? AND IsEditable=1";
+            $query = "SELECT ID FROM ms_references WHERE ID=? AND IsEditable=1";
             $isExist = DB::select($query, [$request->_i]);
             if ($isExist) {
-                $query = "DELETE FROM MS_REFERENCES WHERE ID=? AND IsEditable=1";
+                $query = "DELETE FROM ms_references WHERE ID=? AND IsEditable=1";
                 DB::delete($query, [$request->_i]);
                 $return['message'] = "Data has been removed!";
                 $return['callback'] = "doReloadTable()";

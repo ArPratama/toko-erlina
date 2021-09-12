@@ -26,14 +26,14 @@ class StockController extends Controller
     private function validateAuth($Token) {
         $return = array('status'=>false,'UserID'=>"");
         $query = "SELECT u.ID, u.AccountType
-                    FROM MS_USER u
-                        JOIN TR_SESSION s ON s.UserID = u.ID
+                    FROM ms_user u
+                        JOIN tr_session s ON s.UserID = u.ID
                     WHERE s.Token=?
                         AND s.LogoutDate IS NULL";
         $checkAuth = DB::select($query,[$Token]);
         if ($checkAuth) {
             $data = $checkAuth[0];
-            $query = "UPDATE TR_SESSION SET LastActive=NOW() WHERE Token=?";
+            $query = "UPDATE tr_session SET LastActive=NOW() WHERE Token=?";
             DB::update($query,[$Token]);
             $return = array(
                 'status' => true,
@@ -337,7 +337,7 @@ class StockController extends Controller
                                             if ($message!="") $message.= "<br /><br />";
                                             $message.= "SKU is required";
                                         } else {
-                                            $query = "SELECT ID FROM MS_PRODUCT WHERE UPPER(SKU)=UPPER(?)";
+                                            $query = "SELECT ID FROM ms_product WHERE UPPER(SKU)=UPPER(?)";
                                             $isExist = DB::select($query,[$SKU]);
                                             if ($isExist) {
                                                 if ($message!="") $message.= "<br /><br />";
@@ -361,7 +361,7 @@ class StockController extends Controller
                                             if ($message!="") $message.= "<br /><br />";
                                             $message.= "SKU is required";
                                         } else {
-                                            $query = "SELECT ID FROM MS_PRODUCT
+                                            $query = "SELECT ID FROM ms_product
                                                         WHERE UPPER(ID)=UPPER(?) AND UPPER(SKU)=UPPER(?)";
                                             $isExist = DB::select($query,[$ID,$SKU]);
                                             if (!$isExist) {
@@ -400,7 +400,7 @@ class StockController extends Controller
                                         $message.= "CATEGORY ID is required";
                                     } else {
                                         $CategoryID = "";
-                                        $query = "SELECT ID FROM MS_REFERENCES
+                                        $query = "SELECT ID FROM ms_references
                                                     WHERE Type='ProductCategoryList' AND UPPER(Field1)=UPPER(?)";
                                         $isExist = DB::select($query,[$CategoryCode]);
                                         if (!$isExist) {
@@ -530,7 +530,7 @@ class StockController extends Controller
                                         ($PriceFTZ!="" && $PriceFTZ!=null) ||
                                         ($Status!="" && $Status!=null))
                                     {
-                                        $query = "SELECT ID FROM MS_REFERENCES
+                                        $query = "SELECT ID FROM ms_references
                                                     WHERE Type='ProductCategoryList' AND UPPER(Field1)=UPPER(?)";
                                         $isExist = DB::select($query,[$CategoryCode]);
                                         $CategoryID = $isExist[0]->ID;
@@ -556,7 +556,7 @@ class StockController extends Controller
 
                                         if ($ID==""||$ID==null) {
                                             $task = "insert";
-                                            $query = "INSERT INTO MS_PRODUCT
+                                            $query = "INSERT INTO ms_product
                                                         (ID, SKU, Name, Description, CategoryID, UnitPrice, InPrice, ThruPrice, UnitPriceAFP, InPriceAFP, ThruPriceAFP, UnitPriceFTZ, InPriceFTZ, ThruPriceFTZ, IsFocus, Alias1, Alias2, MarketName, Color, Capacity, Status, CreatedDate, CreatedBy, ModifiedDate, ModifiedBy)
                                                         VALUES(UUID(), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,  ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), ?, NULL, NULL)";
                                             DB::insert($query, [
@@ -584,7 +584,7 @@ class StockController extends Controller
                                             ]);
                                         } else {
                                             $task = "update";
-                                            $query = "UPDATE MS_PRODUCT
+                                            $query = "UPDATE ms_product
                                                         SET Name=?,
                                                             Description=?,
                                                             CategoryID=?,
@@ -683,7 +683,7 @@ class StockController extends Controller
                         Color,
                         Capacity,
                         MarketName
-                        FROM MS_PRODUCT
+                        FROM ms_product
                         WHERE Status=1
                         AND (SKU LIKE '%$keywords%' OR Name LIKE '%$keywords%' OR MarketName LIKE '%$keywords%' OR Color LIKE '%$keywords%' OR Capacity LIKE '%$keywords%')
                         ORDER BY SKU ASC";
@@ -703,7 +703,7 @@ class StockController extends Controller
                         UnitPriceFTZ,
                         InPriceFTZ,
                         ThruPriceFTZ
-                        FROM MS_PRODUCT
+                        FROM ms_product
                         WHERE Status=1
                         AND UPPER(SKU)=UPPER(?)";
                 $data = DB::select($query,[$request->_i]);
