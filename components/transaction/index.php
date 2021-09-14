@@ -56,18 +56,6 @@
         />
       </th>
       <th class="px-4 py-3">
-        Status<br />
-        <input
-          id="txtFilterStatus"
-          name="txtFilterStatus"
-          type="text"
-          class="border p-2 rounded w-full mt-1 text-sm form-input focus:border-gray-400 focus:outline-none focus:shadow-outline-gray"
-          placeholder="Type here"
-          onkeyup="doSearchTableColumn(1,$('#txtFilterStatus').val())"
-          disabled
-        />
-      </th>
-      <th class="px-4 py-3">
         Customer Name<br />
         <input
           id="txtFilterCustomerName"
@@ -120,30 +108,17 @@
     "ordering": false,
     columns: [
       { data:'TransactionDate', className:'px-4 py-3 text-sm' },
-      {
-        data:'Status',
-        className:'px-4 py-3 text-sm',
-        render: function (data, type, full, meta) {
-          var html = data==1 ? '<span class="px-2 py-1 font-semibold leading-tight text-green-700 bg-green-100 rounded-full">Active</span>' : '<span class="px-2 py-1 font-semibold leading-tight text-white bg-red-400 rounded-full">Inactive</span>';
-          return html
-        },
-      },
       { data:'CustomerName', className:'px-4 py-3 text-sm' },
       { data:'Description', className:'px-4 py-3 text-sm' },
       {
         data:'ID',
         render: function (data, type, full, meta) {
-          if (getCookie(MSG['cookiePrefix']+'GLOBAL-ACCOUNTTYPE')=='1') {
+          if (getCookie(MSG['cookiePrefix']+'GLOBAL-ACCOUNTTYPE')=='1' || getCookie(MSG['cookiePrefix']+'GLOBAL-ACCOUNTTYPE')=='2') {
             var html = '<div class="flex item-center justify-center">' +
                         '<div onclick="showDetailView(\''+full['ID']+'\')" class="w-4 mr-2 transform hover:text-blue-500 hover:scale-110 cursor-pointer">' +
                           '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">' +
                             '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />' +
                             '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />' +
-                          '</svg>' +
-                        '</div>' +
-                        '<div onclick="showDetailForm(\''+full['ID']+'\')" class="w-4 mr-2 transform hover:text-blue-500 hover:scale-110 cursor-pointer">' +
-                          '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">' +
-                            '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />' +
                           '</svg>' +
                         '</div>' +
                         '<div onclick="showDeleteConfirm(\''+full['ID']+'\')" class="w-4 mr-2 transform hover:text-blue-500 hover:scale-110 cursor-pointer">' +
@@ -210,9 +185,8 @@
     });
   }
 
-  if (getCookie(MSG['cookiePrefix']+'GLOBAL-ACCOUNTTYPE')=='1') {
+  if (getCookie(MSG['cookiePrefix']+'GLOBAL-ACCOUNTTYPE')=='1' || getCookie(MSG['cookiePrefix']+'GLOBAL-ACCOUNTTYPE')=='2') {
     $("#btnFrmAdd").show();
-    $("#btnFrmBulk").show();
   } else {
     $("#btnFrmExport").show();
   }

@@ -149,7 +149,7 @@
       {
         data:'ID',
         render: function (data, type, full, meta) {
-          if (getCookie(MSG['cookiePrefix']+'GLOBAL-ACCOUNTTYPE')=='1') {
+          if (getCookie(MSG['cookiePrefix']+'GLOBAL-ACCOUNTTYPE')=='1' || getCookie(MSG['cookiePrefix']+'GLOBAL-ACCOUNTTYPE')=='3') {
             var html = '<div class="flex item-center justify-center">' +
                         '<div onclick="showDetailView(\''+full['ID']+'\')" class="w-4 mr-2 transform hover:text-blue-500 hover:scale-110 cursor-pointer">' +
                           '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">' +
@@ -220,10 +220,9 @@
     });
   }
 
-  if (getCookie(MSG['cookiePrefix']+'GLOBAL-ACCOUNTTYPE')=='1') {
+  if (getCookie(MSG['cookiePrefix']+'GLOBAL-ACCOUNTTYPE')=='1' || getCookie(MSG['cookiePrefix']+'GLOBAL-ACCOUNTTYPE')=='3') {
     $("#btnFrmAdd").show();
     $("#btnFrmBulk").show();
-  } else {
-    $("#btnFrmExport").show();
   }
+
 </script>

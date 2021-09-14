@@ -223,10 +223,9 @@
     });
   }
 
-  if (getCookie(MSG['cookiePrefix']+'GLOBAL-ACCOUNTTYPE')=='1') {
+  if (getCookie(MSG['cookiePrefix']+'GLOBAL-ACCOUNTTYPE')=='1' || getCookie(MSG['cookiePrefix']+'GLOBAL-ACCOUNTTYPE')=='3') {
     $("#btnFrmAdd").show();
     $("#btnFrmBulk").show();
-  } else {
-    $("#btnFrmExport").show();
   }
+
 </script>

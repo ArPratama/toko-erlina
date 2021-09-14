@@ -133,6 +133,11 @@
   $('#tblreports').hide();
   $('.txtSearch_tblreports_class').hide();
 
+  $('#btnFrmExport').hide();
+  if (getCookie(MSG['cookiePrefix']+'GLOBAL-ACCOUNTTYPE')=='3' || getCookie(MSG['cookiePrefix']+'GLOBAL-ACCOUNTTYPE')=='1') {
+        $('#btnFrmExport').show();
+  }
+
   function initDataTable() {
       $('#tblreports').DataTable().clear();
       $('#tblreports').DataTable().destroy();

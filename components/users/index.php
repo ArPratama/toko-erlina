@@ -25,6 +25,7 @@
       <th class="px-4 py-3">User Name</th>
       <th class="px-4 py-3">Contact Number</th>
       <th class="px-4 py-3">Role</th>
+      <th class="px-4 py-3">Account Type</th>
       <th class="px-4 py-3">Status</th>
       <th class="px-4 py-3">&nbsp;</th>
     </tr>
@@ -43,6 +44,14 @@
       { data:'UserName', className:'px-4 py-3 text-sm' },
       { data:'ContactNumber', className:'px-4 py-3 text-sm' },
       { data:'RoleName', className:'px-4 py-3 text-sm' },
+      {
+        data:'AccountType',
+        className:'px-4 py-3 text-sm',
+        render: function (data, type, full, meta) {
+          var html = data==1 ? '<span class="px-2 py-1 font-semibold leading-tight rounded-full">Admin</span>' : '<span class="px-2 py-1 font-semibold leading-tight rounded-full">Pegawai</span>';
+          return html
+        },
+      },
       {
         data:'Status',
         className:'px-4 py-3 text-sm',

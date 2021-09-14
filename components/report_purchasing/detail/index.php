@@ -32,7 +32,6 @@
       <th class="px-4 py-3">Price</th>
       <th class="px-4 py-3">Amount</th>
       <th class="px-4 py-3">Total</th>
-      <th class="px-4 py-3">Status</th>
     </tr>
   </thead>
 </table>
@@ -72,8 +71,7 @@
             var html = doFormatNumber(data);
             return html
           },
-        },
-        { data:'Status', className:'px-4 py-3 text-sm' }
+        }
       ],
       'dom': '<"w-full overflow-x-auto rounded-lg"t<"grid px-4 py-3 text-xs tracking-wide text-gray-500 border-t bg-gray-50 sm:grid-cols-9"<"flex items-center col-span-3"i><"col-span-2"><"flex col-span-4 mt-2 sm:mt-auto sm:justify-end"<"inline-flex items-center"p>>>>'
     });

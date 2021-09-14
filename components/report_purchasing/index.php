@@ -1,5 +1,5 @@
 <div class="float-left">
-  <span class="text-xs text-gray-500 block">Filter by Incoming Date: </span>
+  <span class="text-xs text-gray-500 block">Filter by Transaction Date: </span>
   <input
     id="txtFilterStartTransactionDate"
     name="txtFilterStartTransactionDate"
@@ -56,7 +56,6 @@
       <th class="px-4 py-3">Description</th>
       <th class="px-4 py-3">Total Item</th>
       <th class="px-4 py-3">Total Price</th>
-      <th class="px-4 py-3">Status</th>
       <th class="px-4 py-3">&nbsp;</th>
     </tr>
   </thead>
@@ -135,6 +134,11 @@
   $('#tblreports').hide();
   $('.txtSearch_tblreports_class').hide();
 
+  $('#btnFrmExport').hide();
+  if (getCookie(MSG['cookiePrefix']+'GLOBAL-ACCOUNTTYPE')=='3' || getCookie(MSG['cookiePrefix']+'GLOBAL-ACCOUNTTYPE')=='1') {
+        $('#btnFrmExport').show();
+  }
+
   function initDataTable() {
       $('#tblreports').DataTable().clear();
       $('#tblreports').DataTable().destroy();
@@ -159,14 +163,6 @@
             className:'px-4 py-3 text-sm text-left',
             render: function (data, type, full, meta) {
               var html = doFormatNumber(data);
-              return html
-            },
-          },
-          {
-            data:'Status',
-            className:'px-4 py-3 text-sm',
-            render: function (data, type, full, meta) {
-              var html = data==1 ? '<span class="px-2 py-1 font-semibold leading-tight text-green-700 bg-green-100 rounded-full">Active</span>' : '<span class="px-2 py-1 font-semibold leading-tight text-white bg-red-400 rounded-full">Inactive</span>';
               return html
             },
           },

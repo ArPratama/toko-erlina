@@ -85,12 +85,11 @@ class TransactionController extends Controller
                     if ($request->columns[2]['search']['value'] != '') $definedFilter.= " AND cs.Name LIKE '%".$this->sanitizeString($request->columns[2]['search']['value'])."%' ";
 
                     $total = 0;
-                    $mainQueryTotal = "SELECT COUNT(t.ID) Total
-                                        FROM tr_transaction t
-                                        WHERE {definedFilter}";
+                    $mainQueryTotal = str_replace("{Limit}",'',$mainQuery);
+                    $mainQueryTotal = str_replace("{Order}",'',$mainQueryTotal);
                     $query = str_replace("{definedFilter}",$definedFilter,$mainQueryTotal);
                     $data = DB::select($query);
-                    $total = $data[0]->Total;
+                    $total = count($data);
 
                     if ($request->start!='') $mainQuery = str_replace("{Limit}","LIMIT 10 OFFSET ".$request->start ,$mainQuery);
                     else $mainQuery = str_replace("{Limit}","",$mainQuery);
@@ -124,7 +123,6 @@ class TransactionController extends Controller
             $arrHeader = array(
                 "ITEM ID",
                 "TRANSACTION DATE",
-                "STATUS",
                 "CUSTOMER NAME",
                 "DESCRIPTION",
             );
@@ -133,7 +131,6 @@ class TransactionController extends Controller
                 $rows = array(
                     $value->ID,
                     $value->TransactionDate,
-                    $value->Status,
                     $value->CustomerName,
                     $value->Description
                 );
@@ -592,7 +589,51 @@ class TransactionController extends Controller
         $return = array('status'=>true,'message'=>"",'data'=>null,'callback'=>"");
         $getAuth = $this->validateAuth($request->_s);
         if ($getAuth['status']) {
+
+            $query = "SELECT ID, ProductID, Amount FROM tr_transaction_detail WHERE TransactionID = ?";
+            $refData = DB::select($query, [$request->_i]);
+
+            $query = "SELECT ID, CustomerID FROM tr_transaction WHERE ID = ?";
+            $refDataTransaction = DB::select($query, [$request->_i]);
+
+            //Update Last Purchase Customer
+            $query = "SELECT ID, PurchaseAmount FROM ms_customer WHERE ID = ?";
+            $refDataCustomer = DB::select($query, [$refDataTransaction[0]->CustomerID]);
+
+            if($refDataCustomer){
+                $newPurchaseAmount = $refDataCustomer[0]->PurchaseAmount - 1;
+                $query = "UPDATE ms_customer SET
+                                PurchaseAmount=?,
+                                ModifiedDate=NOW(),
+                                ModifiedBy=?
+                            WHERE ID=?";
+                DB::update($query, [
+                    $newPurchaseAmount,
+                    $getAuth['UserID'],
+                    $refDataTransaction[0]->CustomerID
+                ]);
+            }
+
+            foreach ($refData as $key => $value) {
+                $query = "SELECT ID, Name, Price, OnStock FROM ms_product WHERE ID = ?";
+                $ProductData = DB::select($query, [$value->ProductID]);
+
+                //Update Stock
+                $newStock = $ProductData[0]->OnStock + $value->Amount;
+                $query = "UPDATE ms_product SET OnStock=?,
+                                ModifiedDate=NOW(),
+                                ModifiedBy=?
+                            WHERE ID=?";
+                DB::update($query, [
+                    $newStock,
+                    $getAuth['UserID'],
+                    $value->ProductID
+                ]);
+            }
+
             $query = "DELETE FROM tr_transaction WHERE ID=?";
+            DB::delete($query, [$request->_i]);
+            $query = "DELETE FROM tr_transaction_detail WHERE TransactionID=?";
             DB::delete($query, [$request->_i]);
             $return['message'] = "Data has been removed!";
             $return['callback'] = "doReloadTable()";
@@ -623,6 +664,7 @@ class TransactionController extends Controller
                             ";
                 $data = DB::select($query,[$request->_i]);
                 if ($data) $return['data'] = $data;
+                if ($request->print) $return['callback'] = "onCompleteFetchList(e.data)";
             }
         } else $return = array('status'=>false,'message'=>"Not Authorized");
         return response()->json($return, 200);
@@ -682,7 +724,7 @@ class TransactionController extends Controller
             $query = "SELECT ID, Name, Price, OnStock FROM ms_product WHERE ID = ?";
             $ProductData = DB::select($query, [$refData[0]->ProductID]);
 
-             //Update Stock
+            //Update Stock
             $newStock = $ProductData[0]->OnStock + $refData[0]->Amount;
             $query = "UPDATE ms_product SET OnStock=?,
                             ModifiedDate=NOW(),

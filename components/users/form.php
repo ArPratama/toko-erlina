@@ -65,6 +65,7 @@
           <option value="">Please Select</option>
           <option value="1">Admin</option>
           <option value="2">Pegawai</option>
+          <option value="3">Pemilik Toko</option>
         </select>
       </label>
 

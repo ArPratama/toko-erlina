@@ -25,7 +25,6 @@
           maxlength="100"
           class="border p-2 rounded w-full mt-1 text-sm form-input focus:border-gray-400 focus:outline-none focus:shadow-outline-gray"
           placeholder="Type here"
-          required
         />
         <input type="hidden" id="txtFrmCustomerID" name="txtFrmCustomerID">
       </label>
@@ -42,7 +41,7 @@
         />
       </label>
 
-      <div class="block mt-4">
+      <div class="block mt-4" style="display:none">
         <span>Status *</span>
         <div class="mt-2">
           <label class="inline-flex items-center">
@@ -63,6 +62,7 @@
               type="radio"
               class="text-blue-600 form-radio focus:border-blue-400 focus:outline-none focus:shadow-outline-gray"
               value="0"
+              disabled
             />
             <span class="ml-2">Inactive</span>
           </label>

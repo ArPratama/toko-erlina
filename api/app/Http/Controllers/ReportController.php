@@ -120,6 +120,24 @@ class ReportController extends Controller
                 cs.Name,
                 t.Description
                 ORDER BY t.TransactionDate DESC";
+            if ($request->_export) {
+                $mainQuery = "SELECT t.TransactionDate,
+                c.Name CustomerName,
+                t.Description,
+                p.Name ProductName,
+                td.Price,
+                td.Amount,
+                (td.Price * td.Amount) Total,
+                (SELECT SUM(Amount) FROM tr_transaction_detail td2 WHERE td2.TransactionID = t.ID) TotalItem,
+                (SELECT SUM((td2.Price * td2.Amount)) FROM tr_transaction_detail td2 WHERE td2.TransactionID = t.ID) TotalPrice
+                FROM tr_transaction_detail td
+                LEFT JOIN ms_product p ON p.ID = td.ProductID
+                LEFT JOIN tr_transaction t ON t.ID = td.TransactionID
+                LEFT JOIN ms_customer c ON c.ID = t.CustomerID
+                WHERE {definedFilter}
+                ORDER BY t.TransactionDate DESC";
+            }
+
             $definedFilter = "t.Status IN ('1','2','3')";
             if ($request->startTransactionDate) $definedFilter.= " AND t.TransactionDate >= '".$request->startTransactionDate."'";
             if ($request->endTransactionDate) $definedFilter.= " AND DATE_ADD(t.TransactionDate, INTERVAL -1 DAY) < '".$request->endTransactionDate."'";
@@ -136,21 +154,25 @@ class ReportController extends Controller
             $arrData = [];
             $arrHeader = array(
                 "TRANSACTION DATE",
-                "STATUS",
                 "CUSTOMER NAME",
                 "DESCRIPTION",
+                "PRODUCT NAME",
+                "PRICE",
+                "AMOUNT",
+                "TOTAL",
                 "TOTAL ITEM",
                 "TOTAL PRICE"
             );
             array_push($arrData,$arrHeader);
             foreach ($return['data'] as $key => $value) {
-                $status = 'Active';
-                if ($value->Status == 2) $status = 'Inactive';
                 $rows = array(
                     $value->TransactionDate,
-                    $status,
                     $value->CustomerName,
                     $value->Description,
+                    $value->ProductName,
+                    $value->Price,
+                    $value->Amount,
+                    $value->Total,
                     $value->TotalItem,
                     $value->TotalPrice
                 );
